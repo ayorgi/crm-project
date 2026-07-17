@@ -1,0 +1,76 @@
+Mini CRM - Müşteri Takip Sistemi
+Senaryo
+Bir firma, müşterilerini Excel yerine web üzerinden takip etmek istiyor.
+Sizden basit bir CRM geliştirmeni istiyorum.
+Yapılacak Sayfalar
+1. Giriş Sayfası
+Şimdilik sahte giriş yeterli. Login ol basınca dashboard yönlendirme yapabilirsin.
+E-posta
+
+Şifre
+
+Giriş Yap
+Laravel kısmında gerçek giriş yapılacak.
+________________________________________
+2. Dashboard
+Kartlar gösterilecek.
+Toplam Müşteri
+
+Aktif Müşteri
+
+Pasif Müşteri
+Altına
+Son Eklenen 5 Müşteri
+________________________________________
+3. Müşteri Listesi
+Tablo
+| Ad Soyad | Telefon | E-posta | Durum | İşlem |
+İşlemler
+•	Düzenle 
+•	Sil 
+•	Detay 
+________________________________________
+4. Yeni Müşteri
+Form
+Ad Soyad
+
+Telefon
+
+E-posta
+
+Firma
+
+Adres
+
+Durum
+Kaydet butonu.
+________________________________________
+5. Müşteri Güncelle
+Yeni müşteri sayfasının aynısı.
+________________________________________
+6. Müşteri Detayı
+Ad Soyad
+
+Telefon
+
+E-posta
+
+Firma
+
+Adres
+
+Durum
+
+Oluşturma Tarihi
+ 
+
+Veriler
+localStorage
+veya
+JSON dosyası
+kullanılacak.
+
+
+Not: Yazilan Ilgili tekniklerin sizden arastirilip ogrenilmesi istiyorum. Arayüzü siz tasarlayacaksınız. İnternetten ilham alabilir, hazır component kütüphanesı (shadcn/ui) kullanabilirsin; ancak proje boyunca tek bir hazır admin temasını olduğu gibi kullanmayın. Sayfaların düzenini ve bileşen yerleşimini kendiniz oluşturun. Projeye kendın de yukarıdakılerden farklı sey katabilirsin mantıklı olduğu sürece.
+
+
