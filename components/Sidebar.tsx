@@ -80,7 +80,7 @@ export default function Sidebar() {
           <HelpCircle className="w-5 h-5" />
           Help
         </Link>
-        <Link href="/" className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200">
+        <Link href="/login" className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200">
           <LogOut className="w-5 h-5" />
           Logout
         </Link>
