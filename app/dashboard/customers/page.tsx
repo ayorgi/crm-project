@@ -178,6 +178,7 @@ export default function CustomersPage() {
         setDeleteTarget(null);
     };
 
+    const fullName = (c: any) => c.firstName ? `${c.firstName} ${c.lastName}` : c.name;
     const filtered = customers.filter(c => {
         const name = c.firstName ? `${c.firstName} ${c.lastName}` : c.name || '';
         return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,8 +189,6 @@ export default function CustomersPage() {
         const nb = fullName(b)?.toLowerCase() ?? '';
         return sortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
     });
-
-    const fullName = (c: any) => c.firstName ? `${c.firstName} ${c.lastName}` : c.name;
 
     return (
         <div className="pb-10">
@@ -240,10 +239,10 @@ export default function CustomersPage() {
                                 <th className="py-3.5 px-6">
                                     <button onClick={() => setSortAsc(p => p === true ? false : p === false ? null : true)}
                                         className="flex items-center gap-1.5 hover:text-gray-800 transition-colors group">
-                                        <span>Full Name</span>
+                                        <span>FULL NAME</span>
                                         <span className="flex flex-col gap-[1px] opacity-50 group-hover:opacity-100 transition-opacity">
                                             <span className={`w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-l-transparent border-r-transparent ${sortAsc === true ? 'border-b-[#aa2d29]' : 'border-b-gray-400'}`} />
-                                            <span className={`w-0 h-0 border-l-[3px] border-r-[3px] border-b-[4px] border-l-transparent border-r-transparent ${sortAsc === false ? 'border-b-[#aa2d29]' : 'border-b-gray-400'}`} />
+                                            <span className={`w-0 h-0 border-l-[3px] border-r-[3px] border-t-[4px] border-l-transparent border-r-transparent ${sortAsc === false ? 'border-t-[#aa2d29]' : 'border-t-gray-400'}`} />
                                         </span>
                                     </button>
                                 </th>
