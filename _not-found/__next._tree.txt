@@ -1,2 +1,2 @@
-:HL["/crm-project-frontend/_next/static/chunks/3xivtdonkc0x1.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"HNV697NNeph_mmBHAjpfp"}
+:HL["/crm-project/_next/static/chunks/3xivtdonkc0x1.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"KQhcbYZT5N9lStBLgCIQJ"}
