@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
+import logoImg from '../../public/logo.png';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -25,10 +27,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
         <div className="text-center mb-8">
-          <img
+          <Image
             alt="Logo"
-            src="https://neareasttechnology.com/templates/neareasttechnology/imgs/header-logo.svg"
-            className="w-60 h-auto mx-auto mb-6"
+            src={logoImg}
+            className="w-full max-w-[200px] h-auto mx-auto mb-6 object-contain"
           />
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Login</h1>
           <p className="text-gray-500 mt-2 text-sm">Enter your details to access your account.</p>

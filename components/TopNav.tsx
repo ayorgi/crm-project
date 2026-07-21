@@ -1,5 +1,5 @@
 'use client';
-import { Search, Bell, Settings } from 'lucide-react';
+import { Search, Bell, User } from 'lucide-react';
 
 export default function TopNav() {
   return (
@@ -18,15 +18,8 @@ export default function TopNav() {
         <button className="hover:text-[#aa2d29] transition-colors cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-gray-50">
           <Bell className="w-5 h-5" />
         </button>
-        <button className="hover:text-[#aa2d29] transition-colors cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-gray-50">
-          <Settings className="w-5 h-5" />
-        </button>
-        <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden ml-2 cursor-pointer hover:opacity-90">
-          <img
-            className="w-full h-full object-cover"
-            alt="Profile"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvKCwExw9DcA5Cd3hCNw2K_S8DKsj5lUEL_r1RMeOtL-lahDf4ZVDxT8lpyFh0yftGMsn5ro1FuNunwqdYFAYOo9-RZILoj97YPkMV8YRmaOMg34k22qEf7py61c3jajbxGIcvhh-i6j2TkUymRVhTDMHawRKH39adnvY6sokiW4YnjDHPlClGbo6wQ_-hXDd3YGqGqDytgdnoci7_Hizvyyj7o_f7CfNGhKGV--legx-QsHKXYfZyurrSNd6Eqn0JIVrin2BKxzn7"
-          />
+        <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center text-gray-500 ml-2 cursor-pointer hover:opacity-90">
+          <User className="w-6 h-6" />
         </div>
       </div>
     </header>
