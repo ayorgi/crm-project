@@ -26,11 +26,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center justify-center">
           <Image
             alt="Logo"
             src={logoImg}
-            className="w-full max-w-[200px] h-auto mx-auto mb-6 object-contain"
+            className="w-full max-w-[280px] h-auto mb-6 object-contain translate-x-4"
           />
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Login</h1>
           <p className="text-gray-500 mt-2 text-sm">Enter your details to access your account.</p>
@@ -41,7 +41,7 @@ export default function LoginPage() {
               {error}
             </div>
           )}
-          
+
           <div className="relative">
             <User className="absolute left-3.5 top-3.5 h-5 w-5 text-gray-400" />
             <input

@@ -10,11 +10,11 @@ export default function Sidebar() {
   return (
     <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 border-r border-gray-200 flex flex-col p-6 gap-2 z-40 shadow-sm">
       {/* Logo */}
-      <div className="mb-8 flex justify-center px-4">
+      <div className="mb-8 flex justify-center w-full items-center">
         <Image
           alt="Logo"
           src={logoImg}
-          className="w-full max-w-[140px] h-auto object-contain"
+          className="w-full max-w-[190px] h-auto object-contain translate-x-3"
         />
       </div>
 
@@ -37,13 +37,13 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
-        {/* Customers Link */}
+        {/* VIP Guests Link */}
         <Link
           href="/dashboard/customers"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/customers') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <Users className="w-5 h-5" />
-          Customers
+          VIP Guests
         </Link>
 
       </nav>

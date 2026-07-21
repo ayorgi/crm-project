@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Users, CheckCircle, XCircle } from 'lucide-react';
+import { Users, CheckCircle, Clock } from 'lucide-react';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const pct = (n: number, total: number) => total ? Math.round((n / total) * 100) : 0;
@@ -19,53 +19,58 @@ export default function DashboardPage() {
   }, []);
 
   const total = customers.length;
-  const active = customers.filter(c => c.status === 'Active').length;
-  const inactive = customers.filter(c => c.status === 'Inactive').length;
+  const confirmed = customers.filter(c => c.status === 'Confirmed').length;
+  const inTransit = customers.filter(c => c.status === 'In Transit').length;
   const recent = [...customers].reverse().slice(0, 5);
 
-  const male = customers.filter(c => c.gender === 'Male').length;
-  const female = customers.filter(c => c.gender === 'Female').length;
-  const genderData = [
-    { name: 'Male', value: male, color: '#aa2d29', percentage: pct(male, total) },
-    { name: 'Female', value: female, color: '#e87d7b', percentage: pct(female, total) },
+  const individual = customers.filter(c => c.customerType === 'Individual VIP').length;
+  const agency = customers.filter(c => c.customerType === 'Corporate Agency').length;
+  const hotel = customers.filter(c => c.customerType === 'Hotel Guest').length;
+  const customerTypeData = [
+    { name: 'Individual VIP', value: individual, color: '#aa2d29', percentage: pct(individual, total) },
+    { name: 'Corporate Agency', value: agency, color: '#cc0000', percentage: pct(agency, total) },
+    { name: 'Hotel Guest', value: hotel, color: '#e87d7b', percentage: pct(hotel, total) },
   ];
 
-  const ag: any = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56+': 0 };
+  const vt: any = { 'VIP Business Van': 0, 'Executive Sedan': 0, 'Luxury Minibus': 0, 'First Class Sedan': 0, 'Premium SUV': 0 };
+  customers.forEach(c => { if (c.vehicleType && vt[c.vehicleType] !== undefined) vt[c.vehicleType]++; });
+  const vehicleData = [
+    { name: 'VIP Bus. Van', value: vt['VIP Business Van'], color: '#aa2d29', percentage: pct(vt['VIP Business Van'], total) },
+    { name: 'Exec. Sedan', value: vt['Executive Sedan'], color: '#cc0000', percentage: pct(vt['Executive Sedan'], total) },
+    { name: 'Lux. Minibus', value: vt['Luxury Minibus'], color: '#ef4444', percentage: pct(vt['Luxury Minibus'], total) },
+    { name: '1st Class Sdn', value: vt['First Class Sedan'], color: '#fca5a5', percentage: pct(vt['First Class Sedan'], total) },
+    { name: 'Prem. SUV', value: vt['Premium SUV'], color: '#fbe4e4', percentage: pct(vt['Premium SUV'], total) },
+  ];
+
+  const tt: any = { 'Airport Transfer': 0, 'Point to Point': 0, 'Hourly Chauffeur': 0, 'Intercity Ride': 0, 'Event Logistics': 0 };
+  customers.forEach(c => { if (c.transferType && tt[c.transferType] !== undefined) tt[c.transferType]++; });
+  const transferData = [
+    { name: 'Airport Trsf.', value: tt['Airport Transfer'], color: '#aa2d29', percentage: pct(tt['Airport Transfer'], total) },
+    { name: 'Pt to Pt', value: tt['Point to Point'], color: '#cc0000', percentage: pct(tt['Point to Point'], total) },
+    { name: 'Hourly Chf.', value: tt['Hourly Chauffeur'], color: '#ef4444', percentage: pct(tt['Hourly Chauffeur'], total) },
+    { name: 'Intercity', value: tt['Intercity Ride'], color: '#fca5a5', percentage: pct(tt['Intercity Ride'], total) },
+    { name: 'Event Log.', value: tt['Event Logistics'], color: '#fbe4e4', percentage: pct(tt['Event Logistics'], total) },
+  ];
+
+  const pt: any = {};
   customers.forEach(c => {
-    const a = parseInt(c.age);
-    if (a <= 25) ag['18-25']++;
-    else if (a <= 35) ag['26-35']++;
-    else if (a <= 45) ag['36-45']++;
-    else if (a <= 55) ag['46-55']++;
-    else if (a >= 56) ag['56+']++;
+    const p = c.company;
+    if (p) {
+      pt[p] = (pt[p] || 0) + 1;
+    }
   });
-  const ageData = [
-    { name: '18-25', value: ag['18-25'], color: '#fbe4e4', percentage: pct(ag['18-25'], total) },
-    { name: '26-35', value: ag['26-35'], color: '#fca5a5', percentage: pct(ag['26-35'], total) },
-    { name: '36-45', value: ag['36-45'], color: '#ef4444', percentage: pct(ag['36-45'], total) },
-    { name: '46-55', value: ag['46-55'], color: '#cc0000', percentage: pct(ag['46-55'], total) },
-    { name: '56+', value: ag['56+'], color: '#aa2d29', percentage: pct(ag['56+'], total) },
-  ];
-
-  const lg: any = { Turkish: 0, English: 0, Greek: 0, Russian: 0 };
-  customers.forEach(c => { if (c.language && lg[c.language] !== undefined) lg[c.language]++; });
-  const languageData = [
-    { name: 'Turkish', value: lg.Turkish, color: '#aa2d29', percentage: pct(lg.Turkish, total) },
-    { name: 'English', value: lg.English, color: '#cc0000', percentage: pct(lg.English, total) },
-    { name: 'Greek', value: lg.Greek, color: '#e87d7b', percentage: pct(lg.Greek, total) },
-    { name: 'Russian', value: lg.Russian, color: '#fca5a5', percentage: pct(lg.Russian, total) },
-  ];
-
-  const ct: any = { Lefkoşa: 0, Girne: 0, Gazimağusa: 0, İskele: 0, Güzelyurt: 0, Lefke: 0 };
-  customers.forEach(c => { if (c.city && ct[c.city] !== undefined) ct[c.city]++; });
-  const locationData = [
-    { name: 'Lefkoşa', value: ct.Lefkoşa, color: '#aa2d29', percentage: pct(ct.Lefkoşa, total) },
-    { name: 'Girne', value: ct.Girne, color: '#cc0000', percentage: pct(ct.Girne, total) },
-    { name: 'Gazimağusa', value: ct.Gazimağusa, color: '#e87d7b', percentage: pct(ct.Gazimağusa, total) },
-    { name: 'İskele', value: ct.İskele, color: '#fca5a5', percentage: pct(ct.İskele, total) },
-    { name: 'Güzelyurt', value: ct.Güzelyurt, color: '#f8caca', percentage: pct(ct.Güzelyurt, total) },
-    { name: 'Lefke', value: ct.Lefke, color: '#fbe4e4', percentage: pct(ct.Lefke, total) },
-  ];
+  const sortedPartners = Object.entries(pt)
+    .sort(([, a]: any, [, b]: any) => b - a)
+    .slice(0, 6)
+    .map(([name, value]: any, i) => {
+      const colors = ['#aa2d29', '#cc0000', '#e87d7b', '#fca5a5', '#f8caca', '#fbe4e4'];
+      return {
+        name,
+        value,
+        color: colors[i % colors.length],
+        percentage: pct(value, total)
+      };
+    });
 
   const PieCol = ({ data, title, border }: { data: typeof genderData; title: string; border?: boolean }) => (
     <div className={`flex flex-col items-center justify-start py-2 ${border ? 'border-l border-r border-gray-200' : ''}`}>
@@ -110,16 +115,16 @@ export default function DashboardPage() {
     <>
       <div className="mb-8">
         <h2 className="text-3xl text-gray-900 font-bold tracking-tight">{greeting}, <span className="text-[#aa2d29]">{name}</span></h2>
-        <p className="text-gray-500 mt-1 text-base">Here's what's happening with your customers today.</p>
+        <p className="text-gray-500 mt-1 text-base">Here's what's happening with your VIP guests today.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard label="Total Customers" value={total} icon={<Users className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{active} active · {inactive} inactive</p>} />
-        <StatCard label="Active Customers" value={active} icon={<CheckCircle className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((active / total) * 100) : 0}% of all customers</p>} variant="gray" />
-        <StatCard label="Inactive Customers" value={inactive} icon={<XCircle className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((inactive / total) * 100) : 0}% of all customers</p>} variant="gray" />
+        <StatCard label="Total VIP Guests" value={total} icon={<Users className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-gray-400">{confirmed} confirmed · {inTransit} in transit</p>} />
+        <StatCard label="Confirmed Guests" value={confirmed} icon={<CheckCircle className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((confirmed / total) * 100) : 0}% of all guests</p>} variant="gray" />
+        <StatCard label="In Transit" value={inTransit} icon={<Clock className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((inTransit / total) * 100) : 0}% of all guests</p>} variant="gray" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -142,34 +147,40 @@ export default function DashboardPage() {
                     <td className="py-4 px-6"><span className="font-semibold text-gray-900 group-hover:text-[#aa2d29] transition-colors cursor-pointer">{c.firstName ? `${c.firstName} ${c.lastName}` : c.name}</span></td>
                     <td className="py-4 px-6 text-gray-500">{c.email}</td>
                     <td className="py-4 px-6 text-right">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${c.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                        {c.status}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
+                        c.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        c.status === 'In Transit' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                        c.status === 'Completed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                        c.status === 'Cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
+                        'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}>
+                        {c.status || '—'}
                       </span>
                     </td>
                   </tr>
                 ))}
-                {recent.length === 0 && <tr><td colSpan={3} className="py-12 px-6 text-center text-gray-500">No customers yet.</td></tr>}
+                {recent.length === 0 && <tr><td colSpan={3} className="py-12 px-6 text-center text-gray-500">No guests yet.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 flex flex-col">
-          <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-4">Customer Overview</h3>
+          <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-4">VIP Guest Overview</h3>
           <div className="flex-1 grid grid-cols-3 gap-2 bg-gray-50/50 rounded-xl p-4 border border-gray-100">
-            <PieCol data={genderData} title="Gender" />
-            <PieCol data={ageData} title="Age" border />
-            <PieCol data={languageData} title="Language" />
+            <PieCol data={customerTypeData} title="Guest Type" />
+            <PieCol data={vehicleData} title="Vehicle Type" border />
+            <PieCol data={transferData} title="Transfer Type" />
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 mb-8 hover:shadow-md transition-shadow">
-        <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-6">Customers by City</h3>
+        <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-6">Top B2B Partners (Agencies & Hotels)</h3>
         <div className="space-y-5">
-          {locationData.map(item => (
+          {sortedPartners.map(item => (
             <div key={item.name} className="flex items-center gap-4 group cursor-pointer">
-              <div className="w-24 text-sm font-semibold text-gray-700 group-hover:text-[#aa2d29] transition-colors">{item.name}</div>
+              <div className="w-36 text-sm font-semibold text-gray-700 group-hover:text-[#aa2d29] transition-colors truncate" title={item.name}>{item.name}</div>
               <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${item.percentage}%`, backgroundColor: item.color }} />
               </div>
@@ -179,6 +190,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+          {sortedPartners.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No partner data available yet.</p>}
         </div>
       </div>
     </>
