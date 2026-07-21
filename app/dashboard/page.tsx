@@ -5,6 +5,45 @@ import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from
 
 const pct = (n: number, total: number) => total ? Math.round((n / total) * 100) : 0;
 
+const PieCol = ({ data, title, border }: { data: any[]; title: string; border?: boolean }) => (
+  <div className={`flex flex-col items-center justify-start py-2 ${border ? 'border-l border-r border-gray-200' : ''}`}>
+    <h4 className="text-sm font-semibold text-gray-600 mb-1">{title}</h4>
+    <div className="h-28 w-full hover:scale-105 transition-transform">
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsPie>
+          <Pie data={data} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
+            {data.map((e, i) => <Cell key={i} fill={e.color} />)}
+          </Pie>
+          <Tooltip />
+        </RechartsPie>
+      </ResponsiveContainer>
+    </div>
+    <div className="flex flex-col gap-1 w-full px-4 mt-6">
+      {data.map(item => (
+        <div key={item.name} className="flex justify-between items-center w-full">
+          <span className="text-[11px] font-bold" style={{ color: item.color }}>{item.name}</span>
+          <span className="text-[10px] text-gray-500 font-medium">{item.value.toLocaleString()} ({item.percentage}%)</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const StatCard = ({ label, value, icon, bars, footer, variant }: any) => {
+  const red = variant !== 'gray';
+  return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+      <div className={`absolute top-0 right-0 w-32 h-32 ${red ? 'bg-[#aa2d29]/5' : 'bg-gray-100/50'} rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500`} />
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <span className="font-semibold text-gray-500">{label}</span>
+        <div className={`p-2 ${red ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'bg-gray-100 text-gray-600'} rounded-lg`}>{icon}</div>
+      </div>
+      <div className="text-4xl font-bold text-gray-900 mb-3 relative z-10">{value}</div>
+      <div className="mt-4 relative z-10">{footer}</div>
+    </div>
+  );
+};
+
 export default function DashboardPage() {
   const [name, setName] = useState('Arda');
   const [greeting, setGreeting] = useState('Welcome');
@@ -72,44 +111,7 @@ export default function DashboardPage() {
       };
     });
 
-  const PieCol = ({ data, title, border }: { data: typeof genderData; title: string; border?: boolean }) => (
-    <div className={`flex flex-col items-center justify-start py-2 ${border ? 'border-l border-r border-gray-200' : ''}`}>
-      <h4 className="text-sm font-semibold text-gray-600 mb-1">{title}</h4>
-      <div className="h-28 w-full hover:scale-105 transition-transform">
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartsPie>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
-              {data.map((e, i) => <Cell key={i} fill={e.color} />)}
-            </Pie>
-            <Tooltip />
-          </RechartsPie>
-        </ResponsiveContainer>
-      </div>
-      <div className="flex flex-col gap-1 w-full px-4 mt-6">
-        {data.map(item => (
-          <div key={item.name} className="flex justify-between items-center w-full">
-            <span className="text-[11px] font-bold" style={{ color: item.color }}>{item.name}</span>
-            <span className="text-[10px] text-gray-500 font-medium">{item.value.toLocaleString()} ({item.percentage}%)</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
-  const StatCard = ({ label, value, icon, bars, footer, variant }: any) => {
-    const red = variant !== 'gray';
-    return (
-      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-        <div className={`absolute top-0 right-0 w-32 h-32 ${red ? 'bg-[#aa2d29]/5' : 'bg-gray-100/50'} rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500`} />
-        <div className="flex justify-between items-start mb-4 relative z-10">
-          <span className="font-semibold text-gray-500">{label}</span>
-          <div className={`p-2 ${red ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'bg-gray-100 text-gray-600'} rounded-lg`}>{icon}</div>
-        </div>
-        <div className="text-4xl font-bold text-gray-900 mb-3 relative z-10">{value}</div>
-        <div className="mt-4 relative z-10">{footer}</div>
-      </div>
-    );
-  };
 
   return (
     <>
