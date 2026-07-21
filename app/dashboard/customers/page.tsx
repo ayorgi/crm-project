@@ -116,22 +116,38 @@ function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: 
             <F label="Transfer Type">{sel('transferType', TRANSFER_TYPES, 'Select transfer type')}</F>
             <F label="Vehicle Type">{sel('vehicleType', VEHICLE_TYPES, 'Select vehicle')}</F>
             <F label="Transfer Date">
-                <input 
-                    type="text" 
-                    placeholder="DD/MM/YYYY" 
-                    value={formatDisplayDate(v.transferDate)} 
-                    onChange={e => set('transferDate', e.target.value)} 
-                    className={inp} 
-                />
+                <div className="relative w-full">
+                    <input 
+                        type="text" 
+                        placeholder="DD/MM/YYYY" 
+                        value={formatDisplayDate(v.transferDate)} 
+                        readOnly
+                        className={`${inp} relative z-0 cursor-pointer`} 
+                    />
+                    <input 
+                        type="date"
+                        value={v.transferDate}
+                        onChange={e => set('transferDate', e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                    />
+                </div>
             </F>
             <F label="Transfer Time">
-                <input 
-                    type="text" 
-                    placeholder="HH:MM" 
-                    value={v.transferTime} 
-                    onChange={e => set('transferTime', e.target.value)} 
-                    className={inp} 
-                />
+                <div className="relative w-full">
+                    <input 
+                        type="text" 
+                        placeholder="HH:MM" 
+                        value={v.transferTime} 
+                        readOnly
+                        className={`${inp} relative z-0 cursor-pointer`} 
+                    />
+                    <input 
+                        type="time"
+                        value={v.transferTime}
+                        onChange={e => set('transferTime', e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                    />
+                </div>
             </F>
 
             <Section icon={<MapPin className="w-4 h-4" />} title="Route" />
