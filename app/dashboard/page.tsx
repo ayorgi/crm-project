@@ -1,7 +1,7 @@
 /* eslint-disable */
 'use client';
 import { useState, useEffect } from 'react';
-import { Users, CheckCircle, Clock } from 'lucide-react';
+import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const pct = (n: number, total: number) => total ? Math.round((n / total) * 100) : 0;
@@ -58,61 +58,62 @@ export default function DashboardPage() {
     setCustomers(JSON.parse(localStorage.getItem('customersDB') || '[]'));
   }, []);
 
-  const total = customers.length;
-  const confirmed = customers.filter(c => c.status === 'Confirmed').length;
-  const inTransit = customers.filter(c => c.status === 'In Transit').length;
+  const totalTransfers = customers.length;
+  
+  const grouped = new Map();
+  customers.forEach(c => {
+    const id = c.email ? c.email.toLowerCase().trim() : `${c.firstName || ''} ${c.lastName || ''}`.trim().toLowerCase() || c.name || Math.random().toString();
+    const date = c.transferDate ? new Date(c.transferDate) : new Date(0);
+    if (!grouped.has(id)) {
+      grouped.set(id, { type: c.customerType || 'Individual', company: c.company, transfers: 0, latestDate: date });
+    }
+    const g = grouped.get(id);
+    g.transfers += 1;
+    if (date > g.latestDate) g.latestDate = date;
+  });
+
+  const uniqueGuestsCount = grouped.size;
+  let atRiskCount = 0;
+  grouped.forEach(g => {
+    const monthsSinceLastActive = (new Date().getTime() - g.latestDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    let segment = 'Standard';
+    if (g.type === 'Corporate Agency' || g.company) segment = 'Corporate';
+    else if (g.transfers >= 2) segment = 'Frequent Flyer';
+    else if (monthsSinceLastActive >= 2 || g.latestDate.getTime() === 0) segment = 'At-Risk';
+    if (segment === 'At-Risk') atRiskCount++;
+  });
+
+  const completed = customers.filter(c => c.status === 'Completed').length;
   const recent = [...customers].reverse().slice(0, 5);
 
   const individual = customers.filter(c => c.customerType === 'Individual VIP').length;
   const agency = customers.filter(c => c.customerType === 'Corporate Agency').length;
   const hotel = customers.filter(c => c.customerType === 'Hotel Guest').length;
   const customerTypeData = [
-    { name: 'Individual VIP', value: individual, color: '#aa2d29', percentage: pct(individual, total) },
-    { name: 'Corporate Agency', value: agency, color: '#cc0000', percentage: pct(agency, total) },
-    { name: 'Hotel Guest', value: hotel, color: '#e87d7b', percentage: pct(hotel, total) },
+    { name: 'Individual VIP', value: individual, color: '#aa2d29', percentage: pct(individual, totalTransfers) },
+    { name: 'Corporate Agency', value: agency, color: '#cc0000', percentage: pct(agency, totalTransfers) },
+    { name: 'Hotel Guest', value: hotel, color: '#e87d7b', percentage: pct(hotel, totalTransfers) },
   ];
 
   const vt: any = { 'VIP Business Van': 0, 'Executive Sedan': 0, 'Luxury Minibus': 0, 'First Class Sedan': 0, 'Premium SUV': 0 };
   customers.forEach(c => { if (c.vehicleType && vt[c.vehicleType] !== undefined) vt[c.vehicleType]++; });
   const vehicleData = [
-    { name: 'VIP Bus. Van', value: vt['VIP Business Van'], color: '#aa2d29', percentage: pct(vt['VIP Business Van'], total) },
-    { name: 'Exec. Sedan', value: vt['Executive Sedan'], color: '#cc0000', percentage: pct(vt['Executive Sedan'], total) },
-    { name: 'Lux. Minibus', value: vt['Luxury Minibus'], color: '#ef4444', percentage: pct(vt['Luxury Minibus'], total) },
-    { name: '1st Class Sdn', value: vt['First Class Sedan'], color: '#fca5a5', percentage: pct(vt['First Class Sedan'], total) },
-    { name: 'Prem. SUV', value: vt['Premium SUV'], color: '#fbe4e4', percentage: pct(vt['Premium SUV'], total) },
+    { name: 'VIP Bus. Van', value: vt['VIP Business Van'], color: '#aa2d29', percentage: pct(vt['VIP Business Van'], totalTransfers) },
+    { name: 'Exec. Sedan', value: vt['Executive Sedan'], color: '#cc0000', percentage: pct(vt['Executive Sedan'], totalTransfers) },
+    { name: 'Lux. Minibus', value: vt['Luxury Minibus'], color: '#ef4444', percentage: pct(vt['Luxury Minibus'], totalTransfers) },
+    { name: '1st Class Sdn', value: vt['First Class Sedan'], color: '#fca5a5', percentage: pct(vt['First Class Sedan'], totalTransfers) },
+    { name: 'Prem. SUV', value: vt['Premium SUV'], color: '#fbe4e4', percentage: pct(vt['Premium SUV'], totalTransfers) },
   ];
 
   const tt: any = { 'Airport Transfer': 0, 'Point to Point': 0, 'Hourly Chauffeur': 0, 'Intercity Ride': 0, 'Event Logistics': 0 };
   customers.forEach(c => { if (c.transferType && tt[c.transferType] !== undefined) tt[c.transferType]++; });
   const transferData = [
-    { name: 'Airport Trsf.', value: tt['Airport Transfer'], color: '#aa2d29', percentage: pct(tt['Airport Transfer'], total) },
-    { name: 'Pt to Pt', value: tt['Point to Point'], color: '#cc0000', percentage: pct(tt['Point to Point'], total) },
-    { name: 'Hourly Chf.', value: tt['Hourly Chauffeur'], color: '#ef4444', percentage: pct(tt['Hourly Chauffeur'], total) },
-    { name: 'Intercity', value: tt['Intercity Ride'], color: '#fca5a5', percentage: pct(tt['Intercity Ride'], total) },
-    { name: 'Event Log.', value: tt['Event Logistics'], color: '#fbe4e4', percentage: pct(tt['Event Logistics'], total) },
+    { name: 'Airport Trsf.', value: tt['Airport Transfer'], color: '#aa2d29', percentage: pct(tt['Airport Transfer'], totalTransfers) },
+    { name: 'Pt to Pt', value: tt['Point to Point'], color: '#cc0000', percentage: pct(tt['Point to Point'], totalTransfers) },
+    { name: 'Hourly Chf.', value: tt['Hourly Chauffeur'], color: '#ef4444', percentage: pct(tt['Hourly Chauffeur'], totalTransfers) },
+    { name: 'Intercity', value: tt['Intercity Ride'], color: '#fca5a5', percentage: pct(tt['Intercity Ride'], totalTransfers) },
+    { name: 'Event Log.', value: tt['Event Logistics'], color: '#fbe4e4', percentage: pct(tt['Event Logistics'], totalTransfers) },
   ];
-
-  const pt: any = {};
-  customers.forEach(c => {
-    const p = c.company;
-    if (p) {
-      pt[p] = (pt[p] || 0) + 1;
-    }
-  });
-  const sortedPartners = Object.entries(pt)
-    .sort(([, a]: any, [, b]: any) => b - a)
-    .slice(0, 6)
-    .map(([name, value]: any, i) => {
-      const colors = ['#aa2d29', '#cc0000', '#e87d7b', '#fca5a5', '#f8caca', '#fbe4e4'];
-      return {
-        name,
-        value,
-        color: colors[i % colors.length],
-        percentage: pct(value, total)
-      };
-    });
-
-
 
   return (
     <>
@@ -122,12 +123,12 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard label="Total VIP Guests" value={total} icon={<Users className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{confirmed} confirmed · {inTransit} in transit</p>} />
-        <StatCard label="Confirmed Guests" value={confirmed} icon={<CheckCircle className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((confirmed / total) * 100) : 0}% of all guests</p>} variant="gray" />
-        <StatCard label="In Transit" value={inTransit} icon={<Clock className="w-6 h-6" />}
-          bars={[]} footer={<p className="text-xs text-gray-400">{total ? Math.round((inTransit / total) * 100) : 0}% of all guests</p>} variant="gray" />
+        <StatCard label="Total Unique Guests" value={uniqueGuestsCount} icon={<Users className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-gray-400">across {totalTransfers} total transfers</p>} />
+        <StatCard label="Completed" value={completed} icon={<CheckCircle className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-gray-400">{totalTransfers ? Math.round((completed / totalTransfers) * 100) : 0}% of all transfers</p>} variant="gray" />
+        <StatCard label="At Risk Guests" value={atRiskCount} icon={<AlertTriangle className="w-6 h-6" />}
+          bars={[]} footer={<p className="text-xs text-amber-500">Require engagement</p>} variant="gray" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -175,25 +176,6 @@ export default function DashboardPage() {
             <PieCol data={vehicleData} title="Vehicle Type" border />
             <PieCol data={transferData} title="Transfer Type" />
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6 mb-8 hover:shadow-md transition-shadow">
-        <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-6">Top B2B Partners (Agencies & Hotels)</h3>
-        <div className="space-y-5">
-          {sortedPartners.map(item => (
-            <div key={item.name} className="flex items-center gap-4 group cursor-pointer">
-              <div className="w-36 text-sm font-semibold text-gray-700 group-hover:text-[#aa2d29] transition-colors truncate" title={item.name}>{item.name}</div>
-              <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${item.percentage}%`, backgroundColor: item.color }} />
-              </div>
-              <div className="w-28 text-right flex items-center justify-end gap-2">
-                <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-colors">{item.value.toLocaleString()}</span>
-                <span className="text-[11px] font-medium text-gray-500 bg-gray-100/80 px-2 py-0.5 rounded-full">{item.percentage}%</span>
-              </div>
-            </div>
-          ))}
-          {sortedPartners.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No partner data available yet.</p>}
         </div>
       </div>
     </>

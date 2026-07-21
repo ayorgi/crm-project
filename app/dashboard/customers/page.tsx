@@ -1,8 +1,8 @@
 /* eslint-disable */
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Info, Pencil, Trash2, X, Car, User, Calendar, MapPin, Plane, Users, Building2 } from 'lucide-react';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Search, Info, Pencil, Trash2, X, Car, User, Calendar, MapPin, Plane, Users, Building2, Copy } from 'lucide-react';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectSeparator } from '@/components/ui/select';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -12,19 +12,26 @@ const PARTNERS = [
     'Les Ambassadeurs', "Lord's Palace Hotel", 'Acapulco Resort', 'Arkın Iskele Hotel',
 ];
 
-const PICKUP_LOCATIONS = [
-    'Ercan International Airport', 'Larnaca International Airport', 'Paphos Airport',
-    'Girne (Kyrenia) City Centre', 'Lefkoşa (Nicosia) City Centre', 'Gazimağusa (Famagusta) City Centre',
-    'İskele (Trikomo)', 'Güzelyurt (Morphou)', 'Bafra Resort Area', 'Long Beach Area',
-];
-
-const DROPOFF_LOCATIONS = [
-    'Ercan International Airport', 'Larnaca International Airport', 'Paphos Airport',
-    'Girne (Kyrenia) City Centre', 'Lefkoşa (Nicosia) City Centre', 'Gazimağusa (Famagusta) City Centre',
-    'İskele (Trikomo)', 'Güzelyurt (Morphou)', 'Bafra Resort Area', 'Long Beach Area',
-    'Kaya Palazzo Resort', 'Merit Royal Diamond', 'Elexus Hotel Resort',
-    'Concorde Luxury Resort', 'Limak Cyprus Deluxe', 'Cratos Premium Hotel',
-    'Les Ambassadeurs', "Lord's Palace Hotel", 'Acapulco Resort', 'Arkın Iskele Hotel',
+const LOCATION_GROUPS = [
+    {
+        label: 'Airports',
+        items: ['Ercan International Airport', 'Larnaca International Airport', 'Paphos Airport'].sort()
+    },
+    {
+        label: 'Cities & Regions',
+        items: [
+            'Bafra Resort Area', 'Gazimağusa (Famagusta) City Centre', 'Girne (Kyrenia) City Centre',
+            'Güzelyurt (Morphou)', 'İskele (Trikomo)', 'Lefkoşa (Nicosia) City Centre', 'Long Beach Area'
+        ].sort()
+    },
+    {
+        label: 'Hotels & Resorts',
+        items: [
+            'Acapulco Resort', 'Arkın Iskele Hotel', 'Concorde Luxury Resort', 'Cratos Premium Hotel',
+            'Elexus Hotel Resort', 'Kaya Palazzo Resort', 'Les Ambassadeurs', 'Limak Cyprus Deluxe',
+            "Lord's Palace Hotel", 'Merit Royal Diamond'
+        ].sort()
+    }
 ];
 
 const VEHICLE_TYPES = ['VIP Business Van', 'Executive Sedan', 'Luxury Minibus', 'First Class Sedan', 'Premium SUV'];
@@ -80,7 +87,6 @@ const Section = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
     </div>
 );
 
-
 // ─── Customer Form ────────────────────────────────────────────────────────────
 
 function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: {
@@ -89,12 +95,33 @@ function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: 
 }) {
     const inp = "w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-[#aa2d29] focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all text-gray-900 placeholder:text-gray-400";
     const sel = (key: keyof Form, opts: string[], placeholder: string) => (
-        <Select value={v[key]} onValueChange={val => set(key, val || '')}>
+        <Select value={v[key]} onValueChange={val => set(key, val === 'none' || !val ? '' : val)}>
             <SelectTrigger className="w-full h-10 text-sm bg-gray-50 border-gray-200 focus:border-[#aa2d29]">
                 <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-                <SelectGroup>{opts.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectGroup>
+                <SelectGroup>
+                    <SelectItem value="none" className="text-gray-400 italic">-- Clear Selection --</SelectItem>
+                    {opts.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectGroup>
+            </SelectContent>
+        </Select>
+    );
+
+    const locationSel = (key: keyof Form, placeholder: string) => (
+        <Select value={v[key]} onValueChange={val => set(key, val === 'none' || !val ? '' : val)}>
+            <SelectTrigger className="w-full h-10 text-sm bg-gray-50 border-gray-200 focus:border-[#aa2d29]">
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="none" className="text-gray-400 italic">-- Clear Selection --</SelectItem>
+                {LOCATION_GROUPS.map((group, i) => (
+                    <SelectGroup key={group.label}>
+                        {i > 0 && <SelectSeparator />}
+                        <SelectLabel className="font-bold text-[11px] text-gray-500 uppercase tracking-widest bg-gray-50/50 px-2 py-1.5">{group.label}</SelectLabel>
+                        {group.items.map(o => <SelectItem key={o} value={o} className="pl-4">{o}</SelectItem>)}
+                    </SelectGroup>
+                ))}
             </SelectContent>
         </Select>
     );
@@ -110,49 +137,51 @@ function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: 
             <F label="Guest Type">{sel('customerType', GUEST_TYPES, 'Select guest type')}</F>
             <F label="B2B Partner (Hotel / Agency)">{sel('company', PARTNERS, 'Select partner or leave blank')}</F>
             <F label="Status">{sel('status', STATUSES, 'Select status')}</F>
-            <F label="Passengers">{sel('passengers', PAX_OPTIONS, 'No. of passengers')}</F>
+            <F label="Passengers">{sel('passengers', PAX_OPTIONS, 'Select # of passengers')}</F>
 
             <Section icon={<Car className="w-4 h-4" />} title="Transfer Details" />
             <F label="Transfer Type">{sel('transferType', TRANSFER_TYPES, 'Select transfer type')}</F>
             <F label="Vehicle Type">{sel('vehicleType', VEHICLE_TYPES, 'Select vehicle')}</F>
             <F label="Transfer Date">
                 <div className="relative w-full">
-                    <input 
-                        type="text" 
-                        placeholder="DD/MM/YYYY" 
-                        value={formatDisplayDate(v.transferDate)} 
+                    <input
+                        type="text"
+                        placeholder="DD/MM/YYYY"
+                        value={formatDisplayDate(v.transferDate)}
                         readOnly
-                        className={`${inp} relative z-0 cursor-pointer`} 
+                        className={`${inp} relative z-0 cursor-pointer`}
                     />
-                    <input 
+                    <input
                         type="date"
                         value={v.transferDate}
                         onChange={e => set('transferDate', e.target.value)}
+                        onClick={e => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                         className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
                     />
                 </div>
             </F>
             <F label="Transfer Time">
                 <div className="relative w-full">
-                    <input 
-                        type="text" 
-                        placeholder="HH:MM" 
-                        value={v.transferTime} 
+                    <input
+                        type="text"
+                        placeholder="HH:MM"
+                        value={v.transferTime}
                         readOnly
-                        className={`${inp} relative z-0 cursor-pointer`} 
+                        className={`${inp} relative z-0 cursor-pointer`}
                     />
-                    <input 
+                    <input
                         type="time"
                         value={v.transferTime}
                         onChange={e => set('transferTime', e.target.value)}
+                        onClick={e => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                         className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
                     />
                 </div>
             </F>
 
             <Section icon={<MapPin className="w-4 h-4" />} title="Route" />
-            <F label="Pick-up Location">{sel('pickupLocation', PICKUP_LOCATIONS, 'Select pick-up point')}</F>
-            <F label="Drop-off Location">{sel('dropoffLocation', DROPOFF_LOCATIONS, 'Select drop-off point')}</F>
+            <F label="Pick-up Location">{locationSel('pickupLocation', 'Select pick-up point')}</F>
+            <F label="Drop-off Location">{locationSel('dropoffLocation', 'Select drop-off point')}</F>
             <F label="Flight Number">
                 <div className="relative">
                     <Plane className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -192,7 +221,7 @@ function ConfirmModal({ name, onConfirm, onCancel }: { name: string; onConfirm: 
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
-function DetailPanel({ c, onClose }: { c: any; onClose: () => void }) {
+function DetailPanel({ c, onClose, onDuplicate }: { c: any; onClose: () => void; onDuplicate: () => void }) {
     const fullName = c.firstName ? `${c.firstName} ${c.lastName}` : c.name;
     const sections = [
         {
@@ -227,7 +256,10 @@ function DetailPanel({ c, onClose }: { c: any; onClose: () => void }) {
                         <p className="text-sm font-bold text-gray-900">{fullName}</p>
                         {c.status && <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusStyle(c.status)}`}>{c.status}</span>}
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"><X className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1">
+                        <button onClick={onDuplicate} title="Duplicate Guest" className="p-1.5 rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"><Copy className="w-4 h-4" /></button>
+                        <button onClick={onClose} title="Close" className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"><X className="w-4 h-4" /></button>
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {sections.map(s => (
@@ -262,6 +294,7 @@ export default function CustomersPage() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAdd, setShowAdd] = useState(false);
+    const [isDuplicate, setIsDuplicate] = useState(false);
     const [addForm, setAddForm] = useState({ ...EMPTY });
     const [editId, setEditId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState({ ...EMPTY });
@@ -286,6 +319,22 @@ export default function CustomersPage() {
     const startEdit = (c: any) => {
         if (editId === c.id) { setEditId(null); return; }
         setEditId(c.id); setEditForm({ ...EMPTY, ...c }); setDetailId(null); setShowAdd(false);
+    };
+
+    const startDuplicate = (c: any) => {
+        setAddForm({
+            ...EMPTY,
+            firstName: c.firstName || '',
+            lastName: c.lastName || '',
+            email: c.email || '',
+            phone: c.phone || '',
+            customerType: c.customerType || '',
+            vehicleType: c.vehicleType || '',
+        });
+        setIsDuplicate(true);
+        setShowAdd(true);
+        setDetailId(null);
+        setEditId(null);
     };
 
     const handleEditSave = () => {
@@ -325,7 +374,7 @@ export default function CustomersPage() {
                     <h2 className="text-3xl text-gray-900 font-bold tracking-tight">VIP Guests</h2>
                     <p className="text-gray-500 mt-1 text-base">Manage reservations, transfers and guest profiles.</p>
                 </div>
-                <button onClick={() => { setShowAdd(true); setEditId(null); }}
+                <button onClick={() => { setShowAdd(true); setIsDuplicate(false); setAddForm({ ...EMPTY }); setEditId(null); }}
                     className="bg-[#aa2d29] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#8e2622] active:scale-95 transition-all flex items-center gap-2 shadow-md shadow-[#aa2d29]/20">
                     <Plus className="w-5 h-5" /><span>New Reservation</span>
                 </button>
@@ -336,8 +385,8 @@ export default function CustomersPage() {
                     <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-2xl my-auto relative animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-start mb-7 border-b border-gray-100 pb-5">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">New Reservation</h3>
-                                <p className="text-sm text-gray-500 mt-1">Complete the form to log a new VIP transfer booking.</p>
+                                <h3 className="text-xl font-bold text-gray-900">{isDuplicate ? 'Duplicate Guest' : 'New Reservation'}</h3>
+                                <p className="text-sm text-gray-500 mt-1">{isDuplicate ? 'Review and edit the details for this duplicated booking.' : 'Complete the form to log a new VIP transfer booking.'}</p>
                             </div>
                             <button onClick={() => {
                                 setShowAdd(false); setAddForm({ ...EMPTY });
@@ -346,7 +395,7 @@ export default function CustomersPage() {
                             </button>
                         </div>
                         <CustomerForm value={addForm} onChange={setF(addForm, setAddForm)} onSave={handleAdd}
-                            onCancel={() => { setShowAdd(false); setAddForm({ ...EMPTY }); }} saveLabel="Create Reservation" />
+                            onCancel={() => { setShowAdd(false); setAddForm({ ...EMPTY }); }} saveLabel={isDuplicate ? 'Save Duplicate' : 'Create Reservation'} />
                     </div>
                 </div>
             )}
@@ -422,7 +471,7 @@ export default function CustomersPage() {
                                             </div>
                                         </td>
                                     </tr>
-                                    {detailId === c.id && <DetailPanel key={`d-${c.id}`} c={c} onClose={() => setDetailId(null)} />}
+                                    {detailId === c.id && <DetailPanel key={`d-${c.id}`} c={c} onClose={() => setDetailId(null)} onDuplicate={() => startDuplicate(c)} />}
                                 </React.Fragment>
                             ))}
                             {filtered.length === 0 && (

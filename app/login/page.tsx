@@ -15,7 +15,9 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username === 'admin' && password === 'admin') {
-      localStorage.setItem('currentUser', 'Admin');
+      if (!localStorage.getItem('currentUser')) {
+        localStorage.setItem('currentUser', 'Admin');
+      }
       setError('');
       router.push('/dashboard');
     } else {
@@ -30,6 +32,7 @@ export default function LoginPage() {
           <Image
             alt="Logo"
             src={logoImg}
+            priority
             className="w-full max-w-[280px] h-auto mb-6 object-contain translate-x-4"
           />
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Login</h1>
@@ -72,8 +75,6 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-
-
 
           <button
             type="submit"

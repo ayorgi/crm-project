@@ -1,5 +1,5 @@
 'use client';
-import { Plus, LayoutDashboard, Users, Settings, LogOut } from 'lucide-react';
+import { Plus, LayoutDashboard, Users, Settings, LogOut, PieChart, LineChart } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -14,23 +14,18 @@ export default function Sidebar() {
         <Image
           alt="Logo"
           src={logoImg}
+          priority
           className="w-full max-w-[190px] h-auto object-contain translate-x-3"
         />
       </div>
 
-
-      {/* New Entry Button */}
-      <button className="bg-[#aa2d29] text-white w-full py-2.5 px-4 rounded-lg font-semibold hover:bg-[#8e2622] transition-colors mb-6 flex items-center justify-center gap-2 shadow-sm">
-        <Plus className="w-5 h-5" />
-        New Entry
-      </button>
 
       {/* Navigation */}
       <nav className="flex-1 flex flex-col gap-1 mt-2">
         {/* Dashboard Link */}
         <Link
           href="/dashboard"
-          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname === '/dashboard' ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname === '/dashboard' || pathname === '/dashboard/' ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
         >
           <LayoutDashboard className="w-5 h-5" />
@@ -46,11 +41,32 @@ export default function Sidebar() {
           VIP Guests
         </Link>
 
+        {/* Segments Link */}
+        <Link
+          href="/dashboard/segments"
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/segments') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}>
+          <PieChart className="w-5 h-5" />
+          Segments
+        </Link>
+
+        {/* Analytics Link */}
+        <Link
+          href="/dashboard/analytics"
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/analytics') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}>
+          <LineChart className="w-5 h-5" />
+          Analytics
+        </Link>
+
       </nav>
 
       {/* Bottom Actions */}
       <div className="mt-auto border-t border-gray-200 pt-6 flex flex-col gap-1">
-        <Link href="#" className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200">
+        <Link 
+          href="/dashboard/settings" 
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/settings') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+        >
           <Settings className="w-5 h-5" />
           Settings
         </Link>
