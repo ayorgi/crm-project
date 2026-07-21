@@ -60,6 +60,13 @@ const F = ({ label, children, span2 }: { label: string; children: React.ReactNod
     </div>
 );
 
+const formatDisplayDate = (d: string) => {
+    if (!d) return '';
+    const [y, m, day] = d.split('-');
+    if (y && m && day) return `${m}/${day}/${y}`; // MM/DD/YYYY format
+    return d;
+};
+
 // ─── Section Divider ──────────────────────────────────────────────────────────
 
 const Section = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
@@ -105,8 +112,28 @@ function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: 
             <Section icon={<Car className="w-4 h-4" />} title="Transfer Details" />
             <F label="Transfer Type">{sel('transferType', TRANSFER_TYPES, 'Select transfer type')}</F>
             <F label="Vehicle Type">{sel('vehicleType', VEHICLE_TYPES, 'Select vehicle')}</F>
-            <F label="Transfer Date"><input type="date" value={v.transferDate} onChange={e => set('transferDate', e.target.value)} className={inp} /></F>
-            <F label="Transfer Time"><input type="time" value={v.transferTime} onChange={e => set('transferTime', e.target.value)} className={inp} /></F>
+            <F label="Transfer Date">
+                <input 
+                    type={v.transferDate ? 'date' : 'text'} 
+                    placeholder="MM/DD/YYYY" 
+                    onFocus={(e) => e.target.type = 'date'} 
+                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
+                    value={v.transferDate} 
+                    onChange={e => set('transferDate', e.target.value)} 
+                    className={inp} 
+                />
+            </F>
+            <F label="Transfer Time">
+                <input 
+                    type={v.transferTime ? 'time' : 'text'} 
+                    placeholder="HH:MM" 
+                    onFocus={(e) => e.target.type = 'time'} 
+                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
+                    value={v.transferTime} 
+                    onChange={e => set('transferTime', e.target.value)} 
+                    className={inp} 
+                />
+            </F>
 
             <Section icon={<MapPin className="w-4 h-4" />} title="Route" />
             <F label="Pick-up Location">{sel('pickupLocation', PICKUP_LOCATIONS, 'Select pick-up point')}</F>
@@ -167,7 +194,7 @@ function DetailPanel({ c, onClose }: { c: any; onClose: () => void }) {
         },
         {
             icon: <Car className="w-3.5 h-3.5" />, title: 'Transfer',
-            fields: [['Vehicle', c.vehicleType], ['Type', c.transferType], ['Date', c.transferDate], ['Time', c.transferTime]]
+            fields: [['Vehicle', c.vehicleType], ['Type', c.transferType], ['Date', formatDisplayDate(c.transferDate)], ['Time', c.transferTime]]
         },
         {
             icon: <MapPin className="w-3.5 h-3.5" />, title: 'Route',
@@ -364,7 +391,7 @@ export default function CustomersPage() {
                                                     <p className="text-xs text-gray-400 pl-3.5">{c.dropoffLocation || '—'}</p>
                                                 </div>
                                             ) : <span className="text-gray-400">—</span>}
-                                            {c.transferDate && <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><Calendar className="w-3 h-3 shrink-0" />{c.transferDate}{c.transferTime ? ` at ${c.transferTime}` : ''}</p>}
+                                            {c.transferDate && <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><Calendar className="w-3 h-3 shrink-0" />{formatDisplayDate(c.transferDate)}{c.transferTime ? ` at ${c.transferTime}` : ''}</p>}
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${statusStyle(c.status)}`}>{c.status || '—'}</span>
