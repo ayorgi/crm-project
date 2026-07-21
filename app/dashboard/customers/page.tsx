@@ -63,8 +63,10 @@ const F = ({ label, children, span2 }: { label: string; children: React.ReactNod
 
 const formatDisplayDate = (d: string) => {
     if (!d) return '';
-    const [y, m, day] = d.split('-');
-    if (y && m && day) return `${m}/${day}/${y}`; // MM/DD/YYYY format
+    if (d.includes('-')) {
+        const [y, m, day] = d.split('-');
+        if (y && m && day && y.length === 4) return `${day}/${m}/${y}`; // Convert old YYYY-MM-DD to DD/MM/YYYY
+    }
     return d;
 };
 
@@ -115,21 +117,17 @@ function CustomerForm({ value: v, onChange: set, onSave, onCancel, saveLabel }: 
             <F label="Vehicle Type">{sel('vehicleType', VEHICLE_TYPES, 'Select vehicle')}</F>
             <F label="Transfer Date">
                 <input 
-                    type={v.transferDate ? 'date' : 'text'} 
-                    placeholder="MM/DD/YYYY" 
-                    onFocus={(e) => e.target.type = 'date'} 
-                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
-                    value={v.transferDate} 
+                    type="text" 
+                    placeholder="DD/MM/YYYY" 
+                    value={formatDisplayDate(v.transferDate)} 
                     onChange={e => set('transferDate', e.target.value)} 
                     className={inp} 
                 />
             </F>
             <F label="Transfer Time">
                 <input 
-                    type={v.transferTime ? 'time' : 'text'} 
+                    type="text" 
                     placeholder="HH:MM" 
-                    onFocus={(e) => e.target.type = 'time'} 
-                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text'; }}
                     value={v.transferTime} 
                     onChange={e => set('transferTime', e.target.value)} 
                     className={inp} 
