@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Bell, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Lock, Save } from 'lucide-react';
 
 const Toggle = ({ label, description, state, setState }: any) => (
-  <div className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md hover:border-gray-200 transition-all duration-300">
+  <div className="flex items-center justify-between p-6 bg-white rounded-3xl hover:shadow-soft transition-all duration-300">
     <div className="pr-4">
       <h4 className="font-semibold text-gray-900 text-sm mb-1">{label}</h4>
       <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
@@ -87,15 +87,15 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-300">
-      <div className="mb-8 flex justify-between items-end">
+      <div className="mb-10 flex justify-between items-end">
         <div>
-          <h2 className="text-3xl text-gray-900 font-bold tracking-tight">System Settings</h2>
-          <p className="text-gray-500 mt-1 text-base">Configure your workspace preferences and manage data.</p>
+          <h2 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">System Settings</h2>
+          <p className="text-gray-500 mt-2 text-lg">Configure your workspace preferences and manage data.</p>
         </div>
         {activeTab !== 'Data' && (
           <button 
             onClick={savePreferences}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-white transition-all shadow-sm ${isSaved ? 'bg-emerald-500' : 'bg-[#aa2d29] hover:bg-[#8e2622] active:scale-95'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white transition-all shadow-sm ${isSaved ? 'bg-emerald-500' : 'bg-[#aa2d29] hover:bg-[#8e2622] active:scale-95'}`}
           >
             {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             {isSaved ? 'Saved!' : 'Save Settings'}
@@ -103,7 +103,7 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex min-h-[500px]">
+      <div className="bg-white rounded-3xl shadow-soft overflow-hidden flex min-h-[500px]">
         {/* Sidebar Tabs */}
         <div className="w-64 bg-gray-50 border-r border-gray-100 p-6 flex flex-col gap-2 shrink-0">
           {tabs.map(tab => (

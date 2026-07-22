@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-heading" });
 
 export const metadata: Metadata = {
-  title: "Mini CRM",
-  description: "Müşteri Takip Sistemi",
+  title: "Transfer CRM",
+  description: "VIP Transfer and Fleet Management System",
 };
 
 export default function RootLayout({
@@ -16,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.className} min-h-full flex flex-col antialiased`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${dmSans.variable} font-sans min-h-full flex flex-col antialiased bg-background text-foreground`}>
         {children}
       </body>
     </html>

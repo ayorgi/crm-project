@@ -1,5 +1,5 @@
 'use client';
-import { Plus, LayoutDashboard, Users, Settings, LogOut, PieChart, LineChart } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, PieChart, LineChart, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -8,14 +8,14 @@ import logoImg from '../public/logo.png';
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 border-r border-gray-200 flex flex-col p-6 gap-2 z-40 shadow-sm">
+    <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 flex flex-col p-6 gap-2 z-40 shadow-soft relative">
       {/* Logo */}
       <div className="mb-8 flex justify-center w-full items-center">
         <Image
           alt="Logo"
           src={logoImg}
           priority
-          className="w-full max-w-[190px] h-auto object-contain translate-x-3"
+          className="w-full max-w-[190px] h-auto object-contain mix-blend-multiply"
         />
       </div>
 
@@ -59,6 +59,15 @@ export default function Sidebar() {
           Analytics
         </Link>
 
+        {/* Invoices Link */}
+        <Link
+          href="/dashboard/invoices"
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/invoices') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}>
+          <Receipt className="w-5 h-5" />
+          Invoices
+        </Link>
+
       </nav>
 
       {/* Bottom Actions */}
@@ -70,7 +79,8 @@ export default function Sidebar() {
           <Settings className="w-5 h-5" />
           Settings
         </Link>
-        <Link href="/login" className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200">
+
+        <Link href="/login" className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold">
           <LogOut className="w-5 h-5" />
           Logout
         </Link>

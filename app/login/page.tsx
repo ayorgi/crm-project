@@ -27,15 +27,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
+      <div className="bg-white p-8 rounded-3xl shadow-soft w-full max-w-md border border-transparent">
         <div className="text-center mb-8 flex flex-col items-center justify-center">
           <Image
             alt="Logo"
             src={logoImg}
             priority
-            className="w-full max-w-[280px] h-auto mb-6 object-contain translate-x-4"
+            className="w-full max-w-[280px] h-auto mb-6 object-contain mix-blend-multiply"
           />
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Login</h1>
+          <h1 className="text-4xl font-heading font-bold text-gray-900 tracking-tight">Login</h1>
           <p className="text-gray-500 mt-2 text-sm">Enter your details to access your account.</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-5">
@@ -52,7 +52,7 @@ export default function LoginPage() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#aa2d29] focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#aa2d29] focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
               required
             />
           </div>
@@ -64,7 +64,7 @@ export default function LoginPage() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#aa2d29] focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#aa2d29] focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
               required
             />
             <button

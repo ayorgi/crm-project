@@ -143,6 +143,19 @@ export default function TopNav() {
       </div>
       
       <div className="flex items-center gap-4 text-gray-500">
+        
+        <button 
+          onClick={() => {
+            if (!localStorage.getItem('currentCustomer')) {
+              localStorage.setItem('currentCustomer', 'Admin Tester');
+            }
+            window.location.href = '/portal';
+          }}
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors mr-2"
+        >
+          View as Customer
+        </button>
+
         {/* Notifications */}
         <div className="relative" ref={dropdownRef}>
           <button 

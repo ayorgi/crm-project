@@ -1,7 +1,20 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { Activity, Calendar, Clock, Map, TrendingUp } from 'lucide-react';
+
+
+const parseDate = (dStr: string) => {
+  if (!dStr) return null;
+  if (dStr.includes('/')) {
+    const parts = dStr.split('/');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      return isNaN(d.getTime()) ? null : d;
+    }
+  }
+  const d = new Date(dStr);
+  return isNaN(d.getTime()) ? null : d;
+};
 
 export default function AnalyticsPage() {
   const [fleetData, setFleetData] = useState<any[]>([]);
@@ -9,7 +22,8 @@ export default function AnalyticsPage() {
   const [topRoutesData, setTopRoutesData] = useState<any[]>([]);
   const [topPartnersData, setTopPartnersData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
-  const [kpi, setKpi] = useState({ total: 0, busiestDay: '-', peakHour: '-', topRoute: '-' });
+  const [kpi, setKpi] = useState<any>({ total: 0, thisMonthCount: 0, monthlyGrowth: 0, busiestDay: '-', peakHour: '-', topRoute: '-' });
+  const [sparklineData, setSparklineData] = useState<any[]>([]);
 
   useEffect(() => {
     const customers = JSON.parse(localStorage.getItem('customersDB') || '[]');
@@ -27,10 +41,13 @@ export default function AnalyticsPage() {
       // Status
       if (c.status) statuses[c.status] = (statuses[c.status] || 0) + 1;
 
+      // Skip cancelled transfers for fleet utilization and operational metrics
+      if (c.status === 'Cancelled') return;
+
       // Date / Fleet
       if (c.transferDate) {
-        const d = new Date(c.transferDate);
-        if (!isNaN(d.getTime())) {
+        const d = parseDate(c.transferDate);
+        if (d) {
           const dayName = days[d.getDay()];
           fleet[dayName].total++;
           if (c.vehicleType?.includes('Van')) fleet[dayName].van++;
@@ -86,8 +103,60 @@ export default function AnalyticsPage() {
     let maxHour = '-', maxHourVal = 0;
     Object.entries(hours).forEach(([h, v]) => { if (v > maxHourVal) { maxHourVal = v; maxHour = h; } });
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const lastMonthYear = lastMonthDate.getFullYear();
+    const lastMonth = lastMonthDate.getMonth();
+
+    let thisMonthCount = 0;
+    let lastMonthCount = 0;
+
+    customers.forEach((c: any) => {
+      if (c.status === 'Cancelled') return;
+      if (c.transferDate) {
+        const d = parseDate(c.transferDate);
+        if (d) {
+          if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+            thisMonthCount++;
+          } else if (d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth) {
+            lastMonthCount++;
+          }
+        }
+      }
+    });
+
+    let monthlyGrowth = 0;
+    if (lastMonthCount > 0) {
+      monthlyGrowth = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
+    } else if (thisMonthCount > 0) {
+      monthlyGrowth = 100;
+    }
+
+    // 6-month Sparkline data calculation
+    const monthsSparkline: any[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+      const year = d.getFullYear();
+      const monthIdx = d.getMonth();
+      
+      const count = customers.filter((c: any) => {
+        if (c.status === 'Cancelled') return false;
+        const cd = parseDate(c.transferDate);
+        return cd && cd.getFullYear() === year && cd.getMonth() === monthIdx;
+      }).length;
+
+      monthsSparkline.push({ name: monthName, transfers: count });
+    }
+    setSparklineData(monthsSparkline);
+
     setKpi({
       total: customers.length,
+      thisMonthCount,
+      monthlyGrowth,
       busiestDay: maxDayVal > 0 ? maxDay : 'N/A',
       peakHour: maxHourVal > 0 ? maxHour : 'N/A',
       topRoute: sortedRoutes.length > 0 ? sortedRoutes[0].name.split('➔')[0].trim() : 'N/A'
@@ -122,42 +191,75 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:shadow-md transition-all hover:-translate-y-1">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Volume</span>
-            <div className="p-2 bg-[#aa2d29]/10 text-[#aa2d29] rounded-xl group-hover:scale-110 transition-transform"><Activity className="w-5 h-5" /></div>
+      {/* KPI Cards (Bento Box) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+        <div className="bg-white p-8 rounded-3xl shadow-soft group transition-all md:col-span-2 flex flex-col justify-between relative overflow-hidden">
+          <div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Monthly Volume</span>
           </div>
-          <div className="text-3xl font-black text-gray-900 mb-1">{kpi.total}</div>
-          <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> +12% this month</div>
+          <div className="mt-8 flex items-end justify-between gap-4">
+            <div>
+              <div className="text-6xl font-black text-gray-900 font-heading tracking-tighter mb-2">{kpi.thisMonthCount || 0}</div>
+              <div className={`text-sm font-semibold flex items-center gap-1 ${
+                (kpi.monthlyGrowth || 0) > 0 ? 'text-emerald-600' : (kpi.monthlyGrowth || 0) < 0 ? 'text-rose-600' : 'text-gray-500'
+              }`}>
+                {(kpi.monthlyGrowth || 0) > 0 ? '+' : ''}{kpi.monthlyGrowth || 0}% since last month
+              </div>
+            </div>
+
+            {/* Right side: Minimal Sparkline AreaChart */}
+            <div className="w-48 h-16 shrink-0 pb-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={sparklineData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+                  <defs>
+                    <linearGradient id="sparklineGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="transfers"
+                    name="Transfers"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fill="url(#sparklineGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:shadow-md transition-all hover:-translate-y-1">
-          <div className="flex justify-between items-start mb-2">
+        <div className="bg-white p-8 rounded-3xl shadow-soft group transition-all flex flex-col justify-between">
+          <div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Busiest Day</span>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform"><Calendar className="w-5 h-5" /></div>
           </div>
-          <div className="text-3xl font-black text-gray-900 mb-1">{kpi.busiestDay}</div>
-          <div className="text-xs font-semibold text-gray-500">Highest transfer volume</div>
+          <div className="mt-8">
+            <div className="text-4xl font-black text-gray-900 font-heading tracking-tight mb-2">{kpi.busiestDay}</div>
+            <div className="text-xs font-medium text-gray-400">Peak operational day</div>
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:shadow-md transition-all hover:-translate-y-1">
-          <div className="flex justify-between items-start mb-2">
+        <div className="bg-white p-8 rounded-3xl shadow-soft group transition-all flex flex-col justify-between">
+          <div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Peak Hour</span>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-110 transition-transform"><Clock className="w-5 h-5" /></div>
           </div>
-          <div className="text-3xl font-black text-gray-900 mb-1">{kpi.peakHour}</div>
-          <div className="text-xs font-semibold text-gray-500">Most operational activity</div>
+          <div className="mt-8">
+            <div className="text-4xl font-black text-gray-900 font-heading tracking-tight mb-2">{kpi.peakHour}</div>
+            <div className="text-xs font-medium text-gray-400">Highest traffic</div>
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm group hover:shadow-md transition-all hover:-translate-y-1">
-          <div className="flex justify-between items-start mb-2">
+        <div className="bg-white p-8 rounded-3xl shadow-soft group transition-all flex flex-col justify-between">
+          <div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Top Pick-up</span>
-            <div className="p-2 bg-purple-50 text-purple-600 rounded-xl group-hover:scale-110 transition-transform"><Map className="w-5 h-5" /></div>
           </div>
-          <div className="text-2xl font-black text-gray-900 mb-1 truncate" title={kpi.topRoute}>{kpi.topRoute}</div>
-          <div className="text-xs font-semibold text-gray-500">Most frequent origin</div>
+          <div className="mt-8">
+            <div className="text-4xl font-black text-gray-900 font-heading tracking-tight mb-2 truncate" title={kpi.topRoute}>{kpi.topRoute}</div>
+            <div className="text-xs font-medium text-gray-400">Most frequent origin</div>
+          </div>
         </div>
       </div>
 
@@ -165,41 +267,42 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         {/* Fleet Utilization (Col Span 2) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 group">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">Fleet Utilization <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] uppercase rounded-full">Weekly</span></h3>
-          <div className="h-72 w-full transition-opacity group-hover:opacity-90">
+        <div className="bg-white p-8 rounded-3xl shadow-soft lg:col-span-2 group">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-heading font-bold text-gray-900 flex items-center gap-3">Fleet Utilization <span className="px-2.5 py-1 bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-widest rounded-full">Weekly</span></h3>
+            <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-500">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#aa2d29]"></span> VIP Van</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span> Minibus</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]"></span> SUV</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#4b5563]"></span> Exec.</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#111827]"></span> 1st Class</span>
+            </div>
+          </div>
+          <div className="h-72 w-full transition-opacity group-hover:opacity-95">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={fleetData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorVan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#aa2d29" stopOpacity={0.8}/><stop offset="95%" stopColor="#aa2d29" stopOpacity={0}/></linearGradient>
-                  <linearGradient id="colorMinibus" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/><stop offset="95%" stopColor="#ef4444" stopOpacity={0}/></linearGradient>
-                  <linearGradient id="colorSUV" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#9ca3af" stopOpacity={0.8}/><stop offset="95%" stopColor="#9ca3af" stopOpacity={0}/></linearGradient>
-                  <linearGradient id="colorExecSedan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4b5563" stopOpacity={0.8}/><stop offset="95%" stopColor="#4b5563" stopOpacity={0}/></linearGradient>
-                  <linearGradient id="colorFirstSedan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#111827" stopOpacity={0.8}/><stop offset="95%" stopColor="#111827" stopOpacity={0}/></linearGradient>
-                </defs>
+              <BarChart data={fleetData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={32}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="firstSedan" stackId="1" name="1st Class Sedan" stroke="#111827" strokeWidth={2} fillOpacity={1} fill="url(#colorFirstSedan)" />
-                <Area type="monotone" dataKey="execSedan" stackId="1" name="Exec. Sedan" stroke="#4b5563" strokeWidth={2} fillOpacity={1} fill="url(#colorExecSedan)" />
-                <Area type="monotone" dataKey="suv" stackId="1" name="Premium SUV" stroke="#9ca3af" strokeWidth={2} fillOpacity={1} fill="url(#colorSUV)" />
-                <Area type="monotone" dataKey="minibus" stackId="1" name="Luxury Minibus" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorMinibus)" />
-                <Area type="monotone" dataKey="van" stackId="1" name="VIP Van" stroke="#aa2d29" strokeWidth={3} fillOpacity={1} fill="url(#colorVan)" />
-              </AreaChart>
+                <Bar dataKey="firstSedan" stackId="a" name="1st Class Sedan" fill="#111827" />
+                <Bar dataKey="execSedan" stackId="a" name="Exec. Sedan" fill="#4b5563" />
+                <Bar dataKey="suv" stackId="a" name="Premium SUV" fill="#9ca3af" />
+                <Bar dataKey="minibus" stackId="a" name="Luxury Minibus" fill="#ef4444" />
+                <Bar dataKey="van" stackId="a" name="VIP Van" fill="#aa2d29" radius={[6, 6, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Status Doughnut (Col Span 1) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col group">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Transfer Status</h3>
-          <p className="text-xs text-gray-400 mb-4">Current distribution of all transfers</p>
+        <div className="bg-white p-8 rounded-3xl shadow-soft flex flex-col group">
+          <h3 className="text-xl font-heading font-bold text-gray-900 mb-2">Transfer Status</h3>
+          <p className="text-xs text-gray-400 mb-6">Current distribution</p>
           <div className="flex-1 min-h-[200px] w-full relative transition-transform group-hover:scale-105 duration-500">
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-              <span className="text-3xl font-black text-gray-900">{kpi.total}</span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</span>
+              <span className="text-4xl font-heading font-black text-gray-900">{kpi.total}</span>
             </div>
             <ResponsiveContainer width="100%" height="100%" className="relative z-10">
               <PieChart>
@@ -211,7 +314,7 @@ export default function AnalyticsPage() {
             </ResponsiveContainer>
           </div>
           {/* Custom Legend */}
-          <div className="grid grid-cols-2 gap-y-3 gap-x-2 mt-4">
+          <div className="grid grid-cols-2 gap-y-4 gap-x-2 mt-6">
             {statusData.map(s => (
                <div key={s.name} className="flex items-center gap-2 text-xs font-semibold text-gray-600">
                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -224,8 +327,8 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Peak Hours Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-1 group">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Peak Hours</h3>
+        <div className="bg-white p-8 rounded-3xl shadow-soft lg:col-span-1 group">
+          <h3 className="text-xl font-heading font-bold text-gray-900 mb-8">Peak Hours</h3>
           <div className="h-64 w-full transition-opacity group-hover:opacity-90">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={peakHoursData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -240,8 +343,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Routes */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-1 group">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Frequent Routes</h3>
+        <div className="bg-white p-8 rounded-3xl shadow-soft lg:col-span-1 group">
+          <h3 className="text-xl font-heading font-bold text-gray-900 mb-8">Frequent Routes</h3>
           <div className="h-64 w-full transition-opacity group-hover:opacity-90">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topRoutesData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
@@ -256,8 +359,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Partners */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-1 group">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Top B2B Partners</h3>
+        <div className="bg-white p-8 rounded-3xl shadow-soft lg:col-span-1 group">
+          <h3 className="text-xl font-heading font-bold text-gray-900 mb-8">Top B2B Partners</h3>
           <div className="h-64 w-full transition-opacity group-hover:opacity-90">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topPartnersData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>

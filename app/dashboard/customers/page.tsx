@@ -1,7 +1,7 @@
 /* eslint-disable */
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Info, Pencil, Trash2, X, Car, User, Calendar, MapPin, Plane, Users, Building2, Copy } from 'lucide-react';
+import { Plus, Search, Info, Pencil, Trash2, X, Car, User, Calendar, MapPin, Plane, Users, Building2, Copy, ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectSeparator } from '@/components/ui/select';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -301,6 +301,7 @@ export default function CustomersPage() {
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [sortAsc, setSortAsc] = useState<boolean | null>(null);
+    const [visibleCount, setVisibleCount] = useState(10);
 
     useEffect(() => {
         setCustomers(JSON.parse(localStorage.getItem('customersDB') || '[]'));
@@ -369,28 +370,28 @@ export default function CustomersPage() {
 
     return (
         <div className="pb-10">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-10">
                 <div>
-                    <h2 className="text-3xl text-gray-900 font-bold tracking-tight">VIP Guests</h2>
-                    <p className="text-gray-500 mt-1 text-base">Manage reservations, transfers and guest profiles.</p>
+                    <h2 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">VIP Guests</h2>
+                    <p className="text-gray-500 mt-2 text-lg">Manage reservations, transfers and guest profiles.</p>
                 </div>
                 <button onClick={() => { setShowAdd(true); setIsDuplicate(false); setAddForm({ ...EMPTY }); setEditId(null); }}
-                    className="bg-[#aa2d29] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#8e2622] active:scale-95 transition-all flex items-center gap-2 shadow-md shadow-[#aa2d29]/20">
+                    className="bg-[#aa2d29] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#8e2622] active:scale-95 transition-all flex items-center gap-2 shadow-md shadow-[#aa2d29]/20">
                     <Plus className="w-5 h-5" /><span>New Reservation</span>
                 </button>
             </div>
 
             {showAdd && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-2xl my-auto relative animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-start mb-7 border-b border-gray-100 pb-5">
+                    <div className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl w-full max-w-2xl my-auto relative animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-start mb-7 border-b border-gray-50 pb-5">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">{isDuplicate ? 'Duplicate Guest' : 'New Reservation'}</h3>
+                                <h3 className="text-2xl font-heading font-bold text-gray-900">{isDuplicate ? 'Duplicate Guest' : 'New Reservation'}</h3>
                                 <p className="text-sm text-gray-500 mt-1">{isDuplicate ? 'Review and edit the details for this duplicated booking.' : 'Complete the form to log a new VIP transfer booking.'}</p>
                             </div>
                             <button onClick={() => {
                                 setShowAdd(false); setAddForm({ ...EMPTY });
-                            }} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+                            }} className="p-1.5 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-700 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -400,12 +401,12 @@ export default function CustomersPage() {
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
+                <div className="p-6 border-b border-gray-50 flex items-center gap-3">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input type="text" placeholder="Search by name, flight no., partner, pick-up location..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-[#aa2d29] focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all" />
+                            className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-transparent rounded-2xl text-sm focus:border-transparent focus:bg-white focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all" />
                     </div>
                     <span className="text-sm text-gray-400 font-medium whitespace-nowrap">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
                 </div>
@@ -416,21 +417,21 @@ export default function CustomersPage() {
                                 <th className="py-3.5 px-6">
                                     <button onClick={() => setSortAsc(p => p === true ? false : p === false ? null : true)}
                                         className="flex items-center gap-1.5 hover:text-gray-700 transition-colors group">
-                                        <span>Guest</span>
+                                        <span>GUESTS</span>
                                         <span className="flex flex-col gap-[1px] opacity-40 group-hover:opacity-100 transition-opacity">
                                             <span className={`w-0 h-0 border-l-[3px] border-r-[3px] border-b-[5px] border-l-transparent border-r-transparent ${sortAsc === true ? 'border-b-[#aa2d29]' : 'border-b-gray-400'}`} />
                                             <span className={`w-0 h-0 border-l-[3px] border-r-[3px] border-t-[5px] border-l-transparent border-r-transparent ${sortAsc === false ? 'border-t-[#aa2d29]' : 'border-t-gray-400'}`} />
                                         </span>
                                     </button>
                                 </th>
-                                <th className="py-3.5 px-6">Transfer</th>
-                                <th className="py-3.5 px-6">Route & Date</th>
-                                <th className="py-3.5 px-6 text-center">Status</th>
-                                <th className="py-3.5 px-6 text-center">Actions</th>
+                                <th className="py-3.5 px-6">TRANSFER</th>
+                                <th className="py-3.5 px-6">ROUTE & DATE</th>
+                                <th className="py-3.5 px-6 text-center">STATUS</th>
+                                <th className="py-3.5 px-6 text-center">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm text-gray-700 divide-y divide-gray-50">
-                            {filtered.map(c => (
+                            {filtered.slice(0, visibleCount).map(c => (
                                 <React.Fragment key={c.id}>
                                     <tr className="hover:bg-gray-50/60 transition-colors">
                                         <td className="py-4 px-6">
@@ -488,6 +489,17 @@ export default function CustomersPage() {
                         </tbody>
                     </table>
                 </div>
+                {filtered.length > visibleCount && (
+                    <div className="p-4 border-t border-gray-100 flex justify-center bg-gray-50/50">
+                        <button
+                            onClick={() => setVisibleCount(prev => prev + 10)}
+                            className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center gap-2 group"
+                        >
+                            <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                            Show More (+{filtered.length - visibleCount} remaining)
+                        </button>
+                    </div>
+                )}
             </div>
             {editId !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 overflow-y-auto">
