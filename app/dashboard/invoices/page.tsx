@@ -1,14 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Receipt, DollarSign, Clock, CheckCircle2, Download, Search, Filter, AlertCircle, Building2, User, ChevronDown } from 'lucide-react';
-
-const vehiclePrices: any = {
-  'VIP Business Van': 150,
-  'Executive Sedan': 120,
-  'Premium SUV': 180,
-  'Luxury Minibus': 220,
-  'First Class Sedan': 160,
-};
+import { getVehiclePrice } from '@/lib/utils';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -23,11 +16,12 @@ export default function InvoicesPage() {
     const grouped = new Map();
 
     customersDB.forEach((c: any) => {
-      const isB2B = c.customerType === 'Corporate Agency' || c.customerType === 'Hotel Guest';
+      if (c.status === 'Cancelled') return;
+      const isB2B = c.customerType === 'Corporate Agency';
       const billToId = isB2B && c.company ? c.company : c.email || `${c.firstName} ${c.lastName}`;
       const billToName = isB2B && c.company ? c.company : `${c.firstName} ${c.lastName}`;
       
-      const price = vehiclePrices[c.vehicleType] || 150;
+      const price = getVehiclePrice(c.vehicleType);
       
       if (!grouped.has(billToId)) {
         grouped.set(billToId, {
@@ -180,13 +174,9 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="pb-10 animate-in fade-in duration-300">
-      <div className="mb-8 flex justify-between items-end">
-        <div>
-          <h2 className="text-3xl text-gray-900 font-bold tracking-tight">Financials & Billing</h2>
-          <p className="text-gray-500 mt-1 text-base">Manage your corporate invoices and individual payments seamlessly.</p>
-        </div>
-        <button onClick={handleExportAll} className="bg-[#aa2d29] hover:bg-[#8a2421] text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors flex items-center gap-2 text-sm">
+    <div className="pb-10 pt-2 animate-in fade-in duration-300">
+      <div className="mb-6 flex justify-end">
+        <button onClick={handleExportAll} className="bg-[#aa2d29] hover:bg-[#8a2421] text-white px-5 py-2.5 rounded-xl font-bold shadow-md shadow-[#aa2d29]/20 transition-all flex items-center gap-2 text-sm shrink-0">
           <Download className="w-4 h-4" />
           Export Report
         </button>
@@ -200,34 +190,34 @@ export default function InvoicesPage() {
           </div>
           <div className="mt-8">
             <div className="text-5xl font-black text-gray-900 font-heading tracking-tight mb-2">${totalRevenue.toLocaleString()}</div>
-            <div className="text-xs font-semibold text-gray-500">Across {invoices.reduce((a, b) => a + b.ridesCount, 0)} total rides</div>
+            <div className="text-xs text-gray-500 font-medium">Accumulated across all transfers</div>
           </div>
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-soft flex flex-col justify-between">
           <div>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pending Receivables</span>
+            <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">Pending Collection</span>
           </div>
           <div className="mt-8">
-            <div className="text-5xl font-black text-gray-900 font-heading tracking-tight mb-2">${pendingAmount.toLocaleString()}</div>
-            <div className="text-xs font-semibold text-gray-500">Awaiting processing or future rides</div>
+            <div className="text-5xl font-black text-amber-600 font-heading tracking-tight mb-2">${pendingAmount.toLocaleString()}</div>
+            <div className="text-xs text-amber-700/80 font-medium">Awaiting payment settlement</div>
           </div>
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-soft flex flex-col justify-between">
           <div>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Overdue Payments</span>
+            <span className="text-xs font-bold text-red-500 uppercase tracking-widest">Overdue Invoices</span>
           </div>
           <div className="mt-8">
-            <div className="text-5xl font-black text-gray-900 font-heading tracking-tight mb-2">${overdueAmount.toLocaleString()}</div>
-            <div className="text-xs font-semibold text-rose-500">Requires immediate follow-up</div>
+            <div className="text-5xl font-black text-red-600 font-heading tracking-tight mb-2">${overdueAmount.toLocaleString()}</div>
+            <div className="text-xs text-red-600/80 font-medium">Requires immediate follow-up</div>
           </div>
         </div>
       </div>
 
       {/* Invoices List */}
-      <div className="bg-white rounded-3xl shadow-soft overflow-hidden flex flex-col">
-        <div className="p-8 pb-4 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+      <div className="bg-white rounded-3xl shadow-soft border border-gray-100/80 overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
@@ -235,16 +225,16 @@ export default function InvoicesPage() {
               placeholder="Search by client or invoice ID..." 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-[#aa2d29] focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all" 
+              className="w-full pl-10 pr-4 py-2 bg-gray-50/60 border border-gray-200/80 rounded-xl text-sm focus:border-[#aa2d29] focus:bg-white focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all text-gray-900 placeholder:text-gray-400" 
             />
           </div>
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex bg-gray-100/80 p-1 rounded-xl w-full md:w-auto">
             {['All', 'Paid', 'Pending', 'Overdue'].map(s => (
               <button 
                 key={s} 
                 onClick={() => setStatusFilter(s)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex-1 md:flex-none ${
-                  statusFilter === s ? 'bg-gray-900 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 md:flex-none ${
+                  statusFilter === s ? 'bg-[#aa2d29] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {s}
@@ -256,7 +246,7 @@ export default function InvoicesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-white">
+              <tr className="border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/70">
                 <th className="py-4 px-6">INVOICE ID</th>
                 <th className="py-4 px-6">{renderSortHeader('BILLED TO', 'billTo')}</th>
                 <th className="py-4 px-6">{renderSortHeader('RIDES', 'ridesCount')}</th>
@@ -284,14 +274,14 @@ export default function InvoicesPage() {
                   <td className="py-4 px-6 text-gray-500">{inv.dateFormatted}</td>
                   <td className="py-4 px-6 text-right font-black text-gray-900">${inv.totalAmount.toLocaleString()}</td>
                   <td className="py-4 px-6 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                      inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      inv.status === 'Overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                      'bg-blue-50 text-blue-700 border-blue-200'
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                      inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' :
+                      inv.status === 'Overdue' ? 'bg-red-50 text-red-600 border border-red-200/60' :
+                      'bg-gray-100 text-gray-600 border border-gray-200/60'
                     }`}>
-                      {inv.status === 'Paid' && <CheckCircle2 className="w-3 h-3" />}
-                      {inv.status === 'Overdue' && <AlertCircle className="w-3 h-3" />}
-                      {inv.status === 'Pending' && <Clock className="w-3 h-3" />}
+                      {inv.status === 'Paid' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                      {inv.status === 'Overdue' && <AlertCircle className="w-3 h-3 text-red-600" />}
+                      {inv.status === 'Pending' && <Clock className="w-3 h-3 text-gray-500" />}
                       {inv.status}
                     </span>
                   </td>

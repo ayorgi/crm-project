@@ -101,7 +101,7 @@ Thank you for choosing our VIP Transfer Service!
       case 'Completed': return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200"><CheckCircle2 className="w-3 h-3" /> Completed</span>;
       case 'In Transit': return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><Car className="w-3 h-3" /> In Transit</span>;
       case 'Cancelled': return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200"><AlertCircle className="w-3 h-3" /> Cancelled</span>;
-      default: return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200"><Clock className="w-3 h-3" /> Pending Review</span>;
+      default: return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200"><Clock className="w-3 h-3" /> Pending</span>;
     }
   };
 
@@ -113,7 +113,7 @@ Thank you for choosing our VIP Transfer Service!
   const displayTrips = activeTab === 'Upcoming' ? upcomingTrips : pastTrips;
 
   return (
-    <div className="animate-in fade-in duration-300 pb-10">
+    <div className="pb-10">
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">My Trips</h1>

@@ -8,7 +8,7 @@ import logoImg from '../public/logo.png';
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 flex flex-col p-6 gap-2 z-40 shadow-soft relative">
+    <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 flex flex-col p-6 gap-2 z-20 shadow-soft relative">
       {/* Logo */}
       <div className="mb-8 flex justify-center w-full items-center">
         <Image

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Settings, Bell, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Lock, Save } from 'lucide-react';
+import { Settings, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Lock, Save } from 'lucide-react';
 
 const Toggle = ({ label, description, state, setState }: any) => (
   <div className="flex items-center justify-between p-6 bg-white rounded-3xl hover:shadow-soft transition-all duration-300">
@@ -19,17 +19,12 @@ const Toggle = ({ label, description, state, setState }: any) => (
   </div>
 );
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'General' | 'Notifications' | 'Data'>('General');
+  const [activeTab, setActiveTab] = useState<'General' | 'Data'>('General');
 
   // General Settings
   const [timezone, setTimezone] = useState('Europe/Istanbul');
   const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
   const [currency, setCurrency] = useState('USD');
-
-  // Notifications
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [systemNotifs, setSystemNotifs] = useState(true);
-  const [atRiskAlerts, setAtRiskAlerts] = useState(true);
 
   // Status flags
   const [isSaved, setIsSaved] = useState(false);
@@ -40,19 +35,12 @@ export default function SettingsPage() {
     setTimezone(localStorage.getItem('pref_timezone') || 'Europe/Istanbul');
     setDateFormat(localStorage.getItem('pref_dateFormat') || 'DD/MM/YYYY');
     setCurrency(localStorage.getItem('pref_currency') || 'USD');
-    
-    setEmailAlerts(localStorage.getItem('pref_emailAlerts') !== 'false');
-    setSystemNotifs(localStorage.getItem('pref_systemNotifs') !== 'false');
-    setAtRiskAlerts(localStorage.getItem('pref_atRiskAlerts') !== 'false');
   }, []);
 
   const savePreferences = () => {
     localStorage.setItem('pref_timezone', timezone);
     localStorage.setItem('pref_dateFormat', dateFormat);
     localStorage.setItem('pref_currency', currency);
-    localStorage.setItem('pref_emailAlerts', emailAlerts.toString());
-    localStorage.setItem('pref_systemNotifs', systemNotifs.toString());
-    localStorage.setItem('pref_atRiskAlerts', atRiskAlerts.toString());
     
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
@@ -79,29 +67,23 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'General', icon: <Settings className="w-4 h-4" /> },
-    { id: 'Notifications', icon: <Bell className="w-4 h-4" /> },
     { id: 'Data', icon: <Database className="w-4 h-4" /> },
   ] as const;
 
 
 
   return (
-    <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-300">
-      <div className="mb-10 flex justify-between items-end">
-        <div>
-          <h2 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">System Settings</h2>
-          <p className="text-gray-500 mt-2 text-lg">Configure your workspace preferences and manage data.</p>
-        </div>
-        {activeTab !== 'Data' && (
+    <div className="max-w-4xl mx-auto pb-10 pt-2 animate-in fade-in duration-300">
+      {activeTab !== 'Data' && (
+        <div className="mb-6 flex justify-end">
           <button 
             onClick={savePreferences}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white transition-all shadow-sm ${isSaved ? 'bg-emerald-500' : 'bg-[#aa2d29] hover:bg-[#8e2622] active:scale-95'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white transition-all shadow-md ${isSaved ? 'bg-emerald-600 shadow-emerald-600/20' : 'bg-[#aa2d29] hover:bg-[#8e2622] shadow-[#aa2d29]/20 active:scale-95'}`}
           >
             {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-            {isSaved ? 'Saved!' : 'Save Settings'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-3xl shadow-soft overflow-hidden flex min-h-[500px]">
         {/* Sidebar Tabs */}
@@ -180,31 +162,6 @@ export default function SettingsPage() {
                     </select>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* NOTIFICATIONS TAB */}
-          {activeTab === 'Notifications' && (
-            <div className="animate-in slide-in-from-right-4 fade-in duration-300">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Notification Settings</h3>
-              
-              <div className="space-y-4">
-                <Toggle 
-                  label="Email Alerts" 
-                  description="Receive daily summaries and critical alerts via email." 
-                  state={emailAlerts} setState={setEmailAlerts} 
-                />
-                <Toggle 
-                  label="System Notifications" 
-                  description="Enable in-app notifications (the bell icon on the top right)." 
-                  state={systemNotifs} setState={setSystemNotifs} 
-                />
-                <Toggle 
-                  label="At-Risk Customer Alerts" 
-                  description="Get notified immediately when a high-value customer is flagged as At-Risk." 
-                  state={atRiskAlerts} setState={setAtRiskAlerts} 
-                />
               </div>
             </div>
           )}

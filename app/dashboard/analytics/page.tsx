@@ -30,12 +30,12 @@ export default function AnalyticsPage() {
 
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const fleet: Record<string, any> = {};
-    days.forEach(d => fleet[d] = { name: d, van: 0, execSedan: 0, minibus: 0, firstSedan: 0, suv: 0, total: 0 });
+    days.forEach(d => fleet[d] = { name: d, van: 0, execSedan: 0, firstSedan: 0, suv: 0, total: 0 });
 
     const hours: Record<string, number> = { '00:00': 0, '04:00': 0, '08:00': 0, '12:00': 0, '16:00': 0, '20:00': 0 };
     const routes: Record<string, number> = {};
     const partners: Record<string, number> = {};
-    const statuses: Record<string, number> = { 'Confirmed': 0, 'In Transit': 0, 'Completed': 0, 'Cancelled': 0 };
+    const statuses: Record<string, number> = { 'Pending': 0, 'Confirmed': 0, 'In Transit': 0, 'Completed': 0, 'Cancelled': 0 };
 
     customers.forEach((c: any) => {
       // Status
@@ -50,9 +50,8 @@ export default function AnalyticsPage() {
         if (d) {
           const dayName = days[d.getDay()];
           fleet[dayName].total++;
-          if (c.vehicleType?.includes('Van')) fleet[dayName].van++;
+          if (c.vehicleType?.includes('Van') || c.vehicleType?.includes('Minibus')) fleet[dayName].van++;
           else if (c.vehicleType?.includes('Executive') || (c.vehicleType?.includes('Sedan') && !c.vehicleType?.includes('First'))) fleet[dayName].execSedan++;
-          else if (c.vehicleType?.includes('Minibus')) fleet[dayName].minibus++;
           else if (c.vehicleType?.includes('First')) fleet[dayName].firstSedan++;
           else if (c.vehicleType?.includes('SUV')) fleet[dayName].suv++;
         }
@@ -93,7 +92,7 @@ export default function AnalyticsPage() {
     setTopRoutesData(sortedRoutes);
     setTopPartnersData(Object.entries(partners).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count })));
     
-    const statusColors: any = { 'Confirmed': '#10b981', 'In Transit': '#f59e0b', 'Completed': '#3b82f6', 'Cancelled': '#ef4444' };
+    const statusColors: any = { 'Pending': '#9ca3af', 'Confirmed': '#10b981', 'In Transit': '#f59e0b', 'Completed': '#3b82f6', 'Cancelled': '#ef4444' };
     setStatusData(Object.entries(statuses).map(([name, value]) => ({ name, value, color: statusColors[name] || '#9ca3af' })));
 
     // KPI Calculations
@@ -183,13 +182,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="pb-10 animate-in fade-in duration-300">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h2 className="text-3xl text-gray-900 font-bold tracking-tight">Analytics Center</h2>
-          <p className="text-gray-500 mt-1 text-base">Comprehensive performance and operational insights.</p>
-        </div>
-      </div>
+    <div className="pb-10 pt-2 animate-in fade-in duration-300">
 
       {/* KPI Cards (Bento Box) */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
@@ -272,8 +265,7 @@ export default function AnalyticsPage() {
             <h3 className="text-xl font-heading font-bold text-gray-900 flex items-center gap-3">Fleet Utilization <span className="px-2.5 py-1 bg-gray-50 text-gray-500 text-[10px] uppercase font-bold tracking-widest rounded-full">Weekly</span></h3>
             <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-500">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#aa2d29]"></span> VIP Van</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span> Minibus</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]"></span> SUV</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#d6413d]"></span> SUV</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#4b5563]"></span> Exec.</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#111827]"></span> 1st Class</span>
             </div>
@@ -287,8 +279,7 @@ export default function AnalyticsPage() {
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="firstSedan" stackId="a" name="1st Class Sedan" fill="#111827" />
                 <Bar dataKey="execSedan" stackId="a" name="Exec. Sedan" fill="#4b5563" />
-                <Bar dataKey="suv" stackId="a" name="Premium SUV" fill="#9ca3af" />
-                <Bar dataKey="minibus" stackId="a" name="Luxury Minibus" fill="#ef4444" />
+                <Bar dataKey="suv" stackId="a" name="Premium SUV" fill="#d6413d" />
                 <Bar dataKey="van" stackId="a" name="VIP Van" fill="#aa2d29" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -303,6 +294,7 @@ export default function AnalyticsPage() {
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
               <span className="text-4xl font-heading font-black text-gray-900">{kpi.total}</span>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Rides</span>
             </div>
             <ResponsiveContainer width="100%" height="100%" className="relative z-10">
               <PieChart>

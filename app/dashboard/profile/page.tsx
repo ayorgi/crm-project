@@ -46,11 +46,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-10 animate-in fade-in duration-300">
-      <div className="mb-10">
-        <h2 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">Profile Settings</h2>
-        <p className="text-gray-500 mt-2 text-lg">Manage your personal information and account preferences.</p>
-      </div>
+    <div className="max-w-4xl mx-auto pb-10 pt-2 animate-in fade-in duration-300">
 
       <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
         {/* Header Cover */}

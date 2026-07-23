@@ -72,14 +72,20 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             </Link>
 
             {/* Links */}
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-2">
               {navLinks.map(link => {
-                const isActive = pathname === link.href;
+                const isActive = link.href === '/portal'
+                  ? (pathname === '/portal' || pathname === '/portal/')
+                  : pathname?.startsWith(link.href);
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-bold transition-colors ${isActive ? 'text-[#aa2d29]' : 'text-gray-500 hover:text-gray-900'}`}
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-bold transition-all relative ${
+                      isActive
+                        ? 'bg-rose-50 text-[#aa2d29] border border-rose-200/60 font-extrabold shadow-2xs'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                   >
                     {link.label}
                   </Link>

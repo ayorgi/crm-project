@@ -8,9 +8,8 @@ import logoImg from '../../../public/logo.png';
 const vehiclePrices: Record<string, number> = {
   'VIP Business Van': 150,
   'Executive Sedan': 120,
-  'Premium SUV': 180,
-  'Luxury Minibus': 220,
-  'First Class Sedan': 160,
+  'Premium SUV': 200,
+  'First Class Sedan': 300,
 };
 
 const getVehiclePrice = (vehicleType?: string): number => {
@@ -193,7 +192,7 @@ export default function PortalReceiptsPage() {
   );
 
   return (
-    <div className="animate-in fade-in duration-300 pb-10">
+    <div className="pb-10">
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
@@ -292,8 +291,8 @@ export default function PortalReceiptsPage() {
 
       {/* Professional PDF/Receipt Modal Popup */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden border border-gray-100 my-8 relative animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden border border-gray-100 my-8 relative">
             
             {/* Modal Actions Top Bar */}
             <div className="bg-gray-900 text-white p-4 px-8 flex justify-between items-center">

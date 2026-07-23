@@ -34,10 +34,10 @@ const LOCATION_GROUPS = [
     }
 ];
 
-const VEHICLE_TYPES = ['VIP Business Van', 'Executive Sedan', 'Luxury Minibus', 'First Class Sedan', 'Premium SUV'];
+const VEHICLE_TYPES = ['VIP Business Van', 'Executive Sedan', 'Premium SUV', 'First Class Sedan'];
 const TRANSFER_TYPES = ['Airport Transfer', 'Point to Point', 'Hourly Chauffeur', 'Intercity Ride', 'Event Logistics'];
-const GUEST_TYPES = ['Individual VIP', 'Corporate Agency', 'Hotel Guest'];
-const STATUSES = ['Confirmed', 'In Transit', 'Completed', 'Cancelled'];
+const GUEST_TYPES = ['Individual VIP', 'Corporate Agency'];
+const STATUSES = ['Pending', 'Confirmed', 'In Transit', 'Completed', 'Cancelled'];
 const PAX_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10+'];
 const EMPTY = {
     firstName: '', lastName: '', email: '', phone: '',
@@ -51,6 +51,7 @@ type Form = typeof EMPTY;
 
 const statusStyle = (status: string) => {
     switch (status) {
+        case 'Pending': return 'bg-gray-100 text-gray-700 border-gray-200';
         case 'Confirmed': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
         case 'In Transit': return 'bg-amber-50 text-amber-700 border-amber-200';
         case 'Completed': return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -304,7 +305,69 @@ export default function CustomersPage() {
     const [visibleCount, setVisibleCount] = useState(10);
 
     useEffect(() => {
-        setCustomers(JSON.parse(localStorage.getItem('customersDB') || '[]'));
+        fetch('/fixed_db.json')
+            .then(res => res.json())
+            .then(fixedData => {
+                const stored = JSON.parse(localStorage.getItem('customersDB') || '[]');
+                const storedMap = new Map<any, any>(stored.map((item: any) => [item.id, item]));
+                
+                const mergedMap = new Map();
+                fixedData.forEach((item: any) => {
+                    const itemClean = {
+                        ...item,
+                        vehicleType: item.vehicleType === 'Luxury Minibus' ? 'VIP Business Van' : item.vehicleType,
+                        customerType: item.customerType === 'Hotel Guest' ? 'Corporate Agency' : (item.customerType || (item.company ? 'Corporate Agency' : 'Individual VIP'))
+                    };
+                    if (storedMap.has(item.id)) {
+                        const s = storedMap.get(item.id);
+                        itemClean.status = s.status || itemClean.status;
+                        if (s.vehicleType && s.vehicleType !== 'Luxury Minibus') {
+                            itemClean.vehicleType = s.vehicleType;
+                        }
+                    }
+                    mergedMap.set(item.id, itemClean);
+                });
+
+                stored.forEach((item: any) => {
+                    const itemClean = {
+                        ...item,
+                        vehicleType: item.vehicleType === 'Luxury Minibus' ? 'VIP Business Van' : item.vehicleType
+                    };
+                    if (!mergedMap.has(item.id)) {
+                        mergedMap.set(item.id, itemClean);
+                    }
+                });
+
+                const fullList = Array.from(mergedMap.values());
+                setCustomers(fullList);
+                localStorage.setItem('customersDB', JSON.stringify(fullList));
+
+                if (typeof window !== 'undefined' && window.location.search.includes('action=new')) {
+                    setShowAdd(true);
+                    setIsDuplicate(false);
+                    setAddForm({ ...EMPTY });
+                    setEditId(null);
+                }
+            })
+            .catch(() => {
+                const stored = JSON.parse(localStorage.getItem('customersDB') || '[]');
+                setCustomers(stored);
+
+                if (typeof window !== 'undefined' && window.location.search.includes('action=new')) {
+                    setShowAdd(true);
+                    setIsDuplicate(false);
+                    setAddForm({ ...EMPTY });
+                    setEditId(null);
+                }
+            });
+
+        const handleGlobalUpdate = () => {
+            const stored = JSON.parse(localStorage.getItem('customersDB') || '[]');
+            setCustomers(stored);
+        };
+
+        window.addEventListener('customersUpdated', handleGlobalUpdate);
+        return () => window.removeEventListener('customersUpdated', handleGlobalUpdate);
     }, []);
 
     const persist = (list: any[]) => { setCustomers(list); localStorage.setItem('customersDB', JSON.stringify(list)); };
@@ -313,7 +376,7 @@ export default function CustomersPage() {
     const handleAdd = () => {
         if (!addForm.firstName || !addForm.lastName) return;
         const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-        persist([...customers, { ...addForm, id: Date.now(), createdAt: today }]);
+        persist([{ ...addForm, id: Date.now(), createdAt: today }, ...customers]);
         setAddForm({ ...EMPTY }); setShowAdd(false);
     };
 
@@ -362,24 +425,19 @@ export default function CustomersPage() {
             || (c.flightNumber && c.flightNumber.toLowerCase().includes(q))
             || (c.pickupLocation && c.pickupLocation.toLowerCase().includes(q));
     }).sort((a, b) => {
-        if (sortAsc === null) return 0;
+        if (sortAsc === null) {
+            const idA = typeof a.id === 'number' ? a.id : Number(a.id) || 0;
+            const idB = typeof b.id === 'number' ? b.id : Number(b.id) || 0;
+            if (idA !== idB) return idB - idA;
+            return 0;
+        }
         const na = fullName(a)?.toLowerCase() ?? '';
         const nb = fullName(b)?.toLowerCase() ?? '';
         return sortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
     });
 
     return (
-        <div className="pb-10">
-            <div className="flex justify-between items-center mb-10">
-                <div>
-                    <h2 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">VIP Guests</h2>
-                    <p className="text-gray-500 mt-2 text-lg">Manage reservations, transfers and guest profiles.</p>
-                </div>
-                <button onClick={() => { setShowAdd(true); setIsDuplicate(false); setAddForm({ ...EMPTY }); setEditId(null); }}
-                    className="bg-[#aa2d29] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#8e2622] active:scale-95 transition-all flex items-center gap-2 shadow-md shadow-[#aa2d29]/20">
-                    <Plus className="w-5 h-5" /><span>New Reservation</span>
-                </button>
-            </div>
+        <div className="pb-10 pt-2">
 
             {showAdd && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 overflow-y-auto">
@@ -401,19 +459,19 @@ export default function CustomersPage() {
                 </div>
             )}
 
-            <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex items-center gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="bg-white rounded-3xl shadow-soft border border-gray-100/80 overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input type="text" placeholder="Search by name, flight no., partner, pick-up location..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-transparent rounded-2xl text-sm focus:border-transparent focus:bg-white focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all" />
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50/60 border border-gray-200/80 rounded-xl text-sm focus:border-[#aa2d29] focus:bg-white focus:ring-2 focus:ring-[#aa2d29]/20 outline-none transition-all text-gray-900 placeholder:text-gray-400" />
                     </div>
-                    <span className="text-sm text-gray-400 font-medium whitespace-nowrap">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs font-bold text-gray-500 bg-gray-100/80 px-3.5 py-1.5 rounded-xl border border-gray-200/60 whitespace-nowrap">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50/50">
+                            <tr className="border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/70">
                                 <th className="py-3.5 px-6">
                                     <button onClick={() => setSortAsc(p => p === true ? false : p === false ? null : true)}
                                         className="flex items-center gap-1.5 hover:text-gray-700 transition-colors group">

@@ -1,8 +1,8 @@
 'use client';
-import { formatDDMMYYYY } from '@/lib/dateUtils';
 import React, { useState, useEffect } from 'react';
+import { formatDDMMYYYY } from '@/lib/dateUtils';
 import { useRouter } from 'next/navigation';
-import { Car, MapPin, Calendar, Plane, Users, Info, CheckCircle2, User } from 'lucide-react';
+import { MapPin, CheckCircle2, User, ArrowLeftRight, Calendar, Car, Sparkles, Users, Info, Plane } from 'lucide-react';
 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectSeparator } from '@/components/ui/select';
 
@@ -46,13 +46,15 @@ export default function BookTransferPage() {
   const [time, setTime] = useState('');
   const [vehicle, setVehicle] = useState('VIP Business Van');
   const [flight, setFlight] = useState('');
-  const [pax, setPax] = useState('1');
+  const [pax, setPax] = useState('');
   const [notes, setNotes] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [profileMissing, setProfileMissing] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const [hasPrefilled, setHasPrefilled] = useState(false);
 
   const formatDisplayDate = (d: string) => {
     if (!d) return '';
@@ -70,9 +72,20 @@ export default function BookTransferPage() {
     const profile = JSON.parse(localStorage.getItem('customerProfile') || '{}');
     if (!profile.firstName || !profile.email) {
       setProfileMissing(true);
+    } else {
+      if (profile.preferredVehicle) {
+        setVehicle(profile.preferredVehicle);
+        setHasPrefilled(true);
+      }
     }
     setIsLoaded(true);
   }, []);
+
+  const handleSwap = () => {
+    const temp = pickup;
+    setPickup(dropoff);
+    setDropoff(temp);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +106,7 @@ export default function BookTransferPage() {
         email: profile.email || '',
         phone: profile.phone || '',
         company: profile.company || '',
-        customerType: profile.company ? (profile.company.toLowerCase().includes('hotel') || profile.company.toLowerCase().includes('resort') ? 'Hotel Guest' : 'Corporate Agency') : 'Individual VIP',
+        customerType: profile.company ? 'Corporate Agency' : 'Individual VIP',
         pickupLocation: pickup,
         dropoffLocation: dropoff,
         transferDate: formatDDMMYYYY(date),
@@ -101,13 +114,13 @@ export default function BookTransferPage() {
         vehicleType: vehicle,
         transferType: 'Airport Transfer',
         flightNumber: flight,
-        passengers: pax,
+        passengers: pax || '1',
         notes: notes,
         status: 'Pending',
         createdAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
       };
       
-      customersDB.push(newBooking);
+      customersDB.unshift(newBooking);
       localStorage.setItem('customersDB', JSON.stringify(customersDB));
       
       setSuccess(true);
@@ -119,17 +132,17 @@ export default function BookTransferPage() {
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto py-20 animate-in fade-in zoom-in duration-500 flex flex-col items-center text-center">
+      <div className="max-w-2xl mx-auto py-20 flex flex-col items-center text-center">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-8 shadow-sm">
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <h1 className="text-4xl font-heading font-black text-gray-900 mb-4 tracking-tight">Booking Confirmed!</h1>
         <p className="text-xl text-gray-500 mb-10">Your transfer request has been successfully submitted. We will review it shortly.</p>
         <div className="flex gap-4">
-          <button onClick={() => router.push('/portal/trips')} className="bg-[#aa2d29] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#8e2622] transition-colors shadow-md">
+          <button onClick={() => router.push('/portal/trips')} className="bg-[#aa2d29] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#8e2622] shadow-md">
             View My Trips
           </button>
-          <button onClick={() => router.push('/portal')} className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors">
+          <button onClick={() => router.push('/portal')} className="bg-white border-2 border-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold hover:bg-gray-50">
             Return to Portal
           </button>
         </div>
@@ -139,13 +152,13 @@ export default function BookTransferPage() {
 
   if (profileMissing) {
     return (
-      <div className="max-w-2xl mx-auto py-20 animate-in fade-in zoom-in duration-500 flex flex-col items-center text-center">
+      <div className="max-w-2xl mx-auto py-20 flex flex-col items-center text-center">
         <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-8 shadow-sm">
           <User className="w-12 h-12" />
         </div>
         <h1 className="text-4xl font-heading font-black text-gray-900 mb-4 tracking-tight">Profile Required</h1>
         <p className="text-xl text-gray-500 mb-10">Please complete your profile details first before booking a transfer. This helps us provide you with the best VIP experience.</p>
-        <button onClick={() => router.push('/portal/profile')} className="bg-[#aa2d29] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#8e2622] transition-colors shadow-md">
+        <button onClick={() => router.push('/portal/profile')} className="bg-[#aa2d29] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#8e2622] shadow-md">
           Setup My Profile
         </button>
       </div>
@@ -153,7 +166,7 @@ export default function BookTransferPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto animate-in fade-in duration-300 pb-10">
+    <div className="max-w-3xl mx-auto pb-10">
       <div className="mb-10 text-center">
         <h1 className="text-4xl text-gray-900 font-heading font-bold tracking-tight">Book a Transfer</h1>
         <p className="text-gray-500 mt-2 text-lg">Schedule your premium ride in seconds.</p>
@@ -162,9 +175,19 @@ export default function BookTransferPage() {
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-soft p-8 md:p-12 space-y-8">
         {/* Route Details */}
         <section>
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#aa2d29]" /> Route
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#aa2d29]" /> Route
+            </h2>
+            <button
+              type="button"
+              onClick={handleSwap}
+              className="text-xs font-bold text-[#aa2d29] hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200/60 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" /> Swap Locations
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Pick-up Location *</label>
@@ -244,9 +267,16 @@ export default function BookTransferPage() {
 
         {/* Vehicle Selection */}
         <section>
-          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Car className="w-4 h-4 text-[#aa2d29]" /> Select Vehicle
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <Car className="w-4 h-4 text-[#aa2d29]" /> Select Vehicle
+            </h2>
+            {hasPrefilled && (
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                <Sparkles className="w-3 h-3 text-amber-600" /> Pre-filled from VIP Profile
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {VEHICLES.map(v => (
               <div 
@@ -276,22 +306,25 @@ export default function BookTransferPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Flight Number</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Flight Number <span className="text-xs text-gray-400 font-normal">(Optional - Airport Only)</span>
+              </label>
               <div className="relative">
                 <Plane className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="text" placeholder="e.g. TK 960" value={flight} onChange={e => setFlight(e.target.value)} className="w-full h-12 pl-11 pr-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#aa2d29]/20 focus:border-[#aa2d29] outline-none font-medium text-sm" />
+                <input type="text" placeholder="e.g. TK 960 (Leave blank if not applicable)" value={flight} onChange={e => setFlight(e.target.value)} className="w-full h-12 pl-11 pr-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#aa2d29]/20 focus:border-[#aa2d29] outline-none font-medium text-sm" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Passengers</label>
-              <Select value={String(pax)} onValueChange={val => val && setPax(val)}>
+              <Select value={pax} onValueChange={val => setPax(val === 'none' || !val ? '' : val)}>
                 <SelectTrigger className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#aa2d29]/20 focus:border-[#aa2d29] outline-none font-medium text-sm">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-gray-400 shrink-0" />
-                    <SelectValue placeholder="Select passengers" />
+                    <SelectValue placeholder="Select # of passengers" />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none" className="text-gray-400 italic">-- Clear Selection --</SelectItem>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
                     <SelectItem key={n} value={String(n)}>
                       {n} {n === 1 ? 'passenger' : 'passengers'}
@@ -311,13 +344,9 @@ export default function BookTransferPage() {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className={`w-full text-white font-bold py-4 rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#aa2d29] hover:bg-[#8e2622]'}`}
+            className={`w-full text-white font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#aa2d29] hover:bg-[#8e2622]'}`}
           >
-            {isSubmitting ? (
-              <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
-            ) : (
-              'Confirm Booking'
-            )}
+            {isSubmitting ? 'Submitting...' : 'Confirm Booking'}
           </button>
         </div>
 
