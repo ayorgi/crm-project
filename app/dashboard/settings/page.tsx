@@ -65,6 +65,38 @@ export default function SettingsPage() {
     window.location.reload();
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (Array.isArray(json)) {
+          localStorage.setItem('customersDB', JSON.stringify(json));
+          window.dispatchEvent(new Event('customersUpdated'));
+          alert(`Successfully imported ${json.length} guest records into the system!`);
+        } else {
+          alert('Invalid JSON file. Expected an array of customer objects.');
+        }
+      } catch (err) {
+        alert('Error parsing JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleSyncWithServer = () => {
+    fetch('/fixed_db.json')
+      .then(res => res.json())
+      .then(fixedData => {
+        localStorage.setItem('customersDB', JSON.stringify(fixedData));
+        window.dispatchEvent(new Event('customersUpdated'));
+        alert(`Successfully synchronized ${fixedData.length} records from server fixed_db.json!`);
+      })
+      .catch(() => alert('Failed to fetch fixed_db.json from server.'));
+  };
+
   const tabs = [
     { id: 'General', icon: <Settings className="w-4 h-4" /> },
     { id: 'Data', icon: <Database className="w-4 h-4" /> },
@@ -173,17 +205,49 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 
-                {/* Export */}
-                <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-start gap-4">
-                  <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
-                    <Download className="w-6 h-6" />
+                {/* Export / Import / Sync */}
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Sync Server Data */}
+                  <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex items-start gap-4">
+                    <div className="p-3 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
+                      <Globe className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 mb-1">Sync with GitHub fixed_db.json</h4>
+                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">Force refresh your browser's local memory with the latest <code className="bg-emerald-100/60 px-1.5 py-0.5 rounded text-emerald-800 font-mono text-xs">fixed_db.json</code> file committed on GitHub.</p>
+                      <button onClick={handleSyncWithServer} className="px-5 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 transition-colors">
+                        Force Sync Server Data
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 mb-1">Export Database</h4>
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">Download a complete backup of all your VIP guests, transfers, and statuses in JSON format. Keep this file safe.</p>
-                    <button onClick={handleExportJSON} className="px-5 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                      Download JSON Backup
-                    </button>
+
+                  {/* Upload JSON */}
+                  <div className="p-6 bg-purple-50/50 border border-purple-100 rounded-2xl flex items-start gap-4">
+                    <div className="p-3 bg-purple-100 text-purple-700 rounded-xl shrink-0">
+                      <Database className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 mb-1">Import JSON File</h4>
+                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">Select and upload a <code className="bg-purple-100/60 px-1.5 py-0.5 rounded text-purple-800 font-mono text-xs">.json</code> file from your computer to load all guest records into the system instantly.</p>
+                      <label className="inline-block px-5 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-700 transition-colors cursor-pointer">
+                        Upload JSON File
+                        <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Export Backup */}
+                  <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-start gap-4">
+                    <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+                      <Download className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 mb-1">Export Database</h4>
+                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">Download a complete backup of all your VIP guests, transfers, and statuses in JSON format.</p>
+                      <button onClick={handleExportJSON} className="px-5 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                        Download JSON Backup
+                      </button>
+                    </div>
                   </div>
                 </div>
 
