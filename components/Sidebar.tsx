@@ -24,7 +24,7 @@ export default function Sidebar() {
       <nav className="flex-1 flex flex-col gap-1 mt-2">
         {/* Dashboard Link */}
         <Link
-          href="/dashboard"
+          href="/dashboard/"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname === '/dashboard' || pathname === '/dashboard/' ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
         >
@@ -34,7 +34,7 @@ export default function Sidebar() {
 
         {/* VIP Guests Link */}
         <Link
-          href="/dashboard/customers"
+          href="/dashboard/customers/"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/customers') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <Users className="w-5 h-5" />
@@ -43,7 +43,7 @@ export default function Sidebar() {
 
         {/* Segments Link */}
         <Link
-          href="/dashboard/segments"
+          href="/dashboard/segments/"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/segments') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <PieChart className="w-5 h-5" />
@@ -52,7 +52,7 @@ export default function Sidebar() {
 
         {/* Analytics Link */}
         <Link
-          href="/dashboard/analytics"
+          href="/dashboard/analytics/"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/analytics') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <LineChart className="w-5 h-5" />
@@ -61,7 +61,7 @@ export default function Sidebar() {
 
         {/* Invoices Link */}
         <Link
-          href="/dashboard/invoices"
+          href="/dashboard/invoices/"
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/invoices') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <Receipt className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function Sidebar() {
       {/* Bottom Actions */}
       <div className="mt-auto border-t border-gray-200 pt-6 flex flex-col gap-1">
         <Link 
-          href="/dashboard/settings" 
+          href="/dashboard/settings/" 
           className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/settings') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
         >
           <Settings className="w-5 h-5" />

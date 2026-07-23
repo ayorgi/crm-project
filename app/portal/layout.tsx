@@ -104,18 +104,18 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 <p className="font-bold text-gray-900 leading-tight">{customerName}</p>
                 <p className="text-gray-500 text-xs">VIP Client</p>
               </div>
-              <button
+              <Link
+                href="/dashboard/"
                 onClick={() => {
                   if (!localStorage.getItem('currentUser')) {
                     localStorage.setItem('currentUser', 'Admin');
                   }
-                  router.push('/dashboard');
                 }}
                 className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors ml-4 mr-2"
                 title="Switch to Admin Dashboard"
               >
                 View as Admin
-              </button>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 ml-1"

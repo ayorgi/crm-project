@@ -134,17 +134,17 @@ export default function TopNav() {
         {/* Vertical Divider */}
         <div className="h-5 w-[1px] bg-gray-200 hidden md:block" />
 
-        <button
+        <Link
+          href="/portal/"
           onClick={() => {
             if (!localStorage.getItem('currentCustomer')) {
               localStorage.setItem('currentCustomer', 'Admin Tester');
             }
-            router.push('/portal');
           }}
           className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors"
         >
           View as Customer
-        </button>
+        </Link>
 
         {/* Profile */}
         <div className="relative" ref={profileRef}>
