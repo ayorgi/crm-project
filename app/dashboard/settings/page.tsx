@@ -205,21 +205,8 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 
-                {/* Export / Import / Sync */}
+                {/* Export / Import */}
                 <div className="grid grid-cols-1 gap-6">
-                  {/* Sync Server Data */}
-                  <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex items-start gap-4">
-                    <div className="p-3 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
-                      <Globe className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 mb-1">Sync with GitHub fixed_db.json</h4>
-                      <p className="text-sm text-gray-600 mb-4 leading-relaxed">Force refresh your browser's local memory with the latest <code className="bg-emerald-100/60 px-1.5 py-0.5 rounded text-emerald-800 font-mono text-xs">fixed_db.json</code> file committed on GitHub.</p>
-                      <button onClick={handleSyncWithServer} className="px-5 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 transition-colors">
-                        Force Sync Server Data
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Upload JSON */}
                   <div className="p-6 bg-purple-50/50 border border-purple-100 rounded-2xl flex items-start gap-4">
