@@ -109,7 +109,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                   if (!localStorage.getItem('currentUser')) {
                     localStorage.setItem('currentUser', 'Admin');
                   }
-                  window.location.href = '/dashboard';
+                  router.push('/dashboard');
                 }}
                 className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors ml-4 mr-2"
                 title="Switch to Admin Dashboard"

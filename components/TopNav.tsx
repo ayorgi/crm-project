@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, X, LayoutDashboard, Plus, Users, Receipt, LineChart, PieChart, Settings } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import NewReservationModal from './NewReservationModal';
 
 export default function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
 
@@ -138,7 +139,7 @@ export default function TopNav() {
             if (!localStorage.getItem('currentCustomer')) {
               localStorage.setItem('currentCustomer', 'Admin Tester');
             }
-            window.location.href = '/portal';
+            router.push('/portal');
           }}
           className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors"
         >
