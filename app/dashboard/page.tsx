@@ -1,14 +1,13 @@
 /* eslint-disable */
 'use client';
 import { useState, useEffect } from 'react';
-import { Users, CheckCircle, Clock, AlertTriangle, Car, Trash2 } from 'lucide-react';
+import { Clock, Trash2 } from 'lucide-react';
 import { RadialBarChart, RadialBar, PolarAngleAxis, PolarRadiusAxis, Label, ResponsiveContainer } from 'recharts';
 
 import { parseDate, getTimestamp, formatDateBadge } from '@/lib/dateUtils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getVehiclePrice } from '@/lib/utils';
-
-const pct = (n: number, total: number) => total ? Math.round((n / total) * 100) : 0;
+import { apiFetch, transformBackendCustomers } from '@/lib/api';
 
 const StatCard = ({ label, value, footer, span2 }: any) => {
   return (
@@ -24,10 +23,20 @@ const StatCard = ({ label, value, footer, span2 }: any) => {
   );
 };
 
-const TargetGaugeCard = ({ totalRevenue, target = 20000, completedCount }: { totalRevenue: number; target?: number; completedCount: number }) => {
-  const percentageNum = Math.min((totalRevenue / target) * 100, 100);
+const TargetGaugeCard = ({
+  monthlyRevenue,
+  target = 20000,
+  completedCount,
+  monthName
+}: {
+  monthlyRevenue: number;
+  target?: number;
+  completedCount: number;
+  monthName: string;
+}) => {
+  const percentageNum = Math.min((monthlyRevenue / target) * 100, 100);
   const percentage = percentageNum.toFixed(2);
-  
+
   const chartData = [
     {
       name: 'Target',
@@ -39,8 +48,11 @@ const TargetGaugeCard = ({ totalRevenue, target = 20000, completedCount }: { tot
   return (
     <div className="bg-white rounded-3xl shadow-soft border border-gray-100/80 overflow-hidden flex flex-col justify-between">
       {/* Header */}
-      <div className="p-8 pb-0">
+      <div className="p-8 pb-0 flex items-center justify-between">
         <h3 className="text-2xl font-heading font-bold text-gray-900 tracking-tight">Monthly Target</h3>
+        <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full uppercase tracking-wider">
+          {monthName}
+        </span>
       </div>
 
       {/* Recharts Radial Bar Chart Semi-Circle */}
@@ -92,15 +104,15 @@ const TargetGaugeCard = ({ totalRevenue, target = 20000, completedCount }: { tot
         </ResponsiveContainer>
       </div>
 
-      {/* Bottom Shaded Footer Bar (100% Dynamic & Compatible) */}
+      {/* Bottom Shaded Footer Bar */}
       <div className="bg-gray-50/70 border-t border-gray-100 p-5 px-6 grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="text-xs font-semibold text-gray-400">Target</p>
           <p className="text-base font-bold text-gray-900 mt-1">${(target / 1000).toFixed(0)}K</p>
         </div>
         <div className="border-x border-gray-200/60 px-1">
-          <p className="text-xs font-semibold text-gray-400">Revenue</p>
-          <p className="text-base font-bold text-emerald-600 mt-1">${totalRevenue.toLocaleString()} <span className="text-emerald-500 text-xs">↑</span></p>
+          <p className="text-xs font-semibold text-gray-400">This Month</p>
+          <p className="text-base font-bold text-emerald-600 mt-1">${monthlyRevenue.toLocaleString()} <span className="text-emerald-500 text-xs">↑</span></p>
         </div>
         <div>
           <p className="text-xs font-semibold text-gray-400">Completed</p>
@@ -116,6 +128,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState('Welcome');
   const [customers, setCustomers] = useState<any[]>([]);
   const [dismissedRecent, setDismissedRecent] = useState<any[]>([]);
+  const [backendStats, setBackendStats] = useState<any>(null);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -123,39 +136,25 @@ export default function DashboardPage() {
     const saved = localStorage.getItem('currentUser');
     if (saved) setName(saved);
 
-    fetch('/fixed_db.json')
+    apiFetch('/customers')
       .then(res => res.json())
-      .then(fixedData => {
-        const stored = JSON.parse(localStorage.getItem('customersDB') || '[]');
-        const storedMap = new Map<any, any>(stored.map((item: any) => [item.id, item]));
-
-        const mergedMap = new Map();
-        fixedData.forEach((item: any) => {
-          const itemClean = {
-            ...item,
-            customerType: item.customerType === 'Hotel Guest' ? 'Corporate Agency' : (item.customerType || (item.company ? 'Corporate Agency' : 'Individual VIP'))
-          };
-          if (storedMap.has(item.id)) {
-            const s = storedMap.get(item.id);
-            itemClean.status = s.status || itemClean.status;
-          }
-          mergedMap.set(item.id, itemClean);
-        });
-
-        stored.forEach((item: any) => {
-          if (!mergedMap.has(item.id)) {
-            mergedMap.set(item.id, item);
-          }
-        });
-
-        const fullList = Array.from(mergedMap.values());
-        setCustomers(fullList);
-        localStorage.setItem('customersDB', JSON.stringify(fullList));
+      .then(result => {
+        if (result.status === 'success' && Array.isArray(result.data)) {
+          const backendCustomers = transformBackendCustomers(result.data);
+          setCustomers(backendCustomers);
+          localStorage.setItem('customersDB', JSON.stringify(backendCustomers));
+        }
       })
-      .catch(() => {
-        const stored = JSON.parse(localStorage.getItem('customersDB') || '[]');
-        setCustomers(stored);
-      });
+      .catch(err => console.error('Error fetching dashboard customers from Laravel API:', err));
+
+    apiFetch('/dashboard/stats')
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success' && result.data) {
+          setBackendStats(result.data);
+        }
+      })
+      .catch(err => console.error('Error fetching dashboard stats:', err));
 
     const dismissed = JSON.parse(localStorage.getItem('dismissedRecent') || '[]');
     setDismissedRecent(dismissed);
@@ -172,27 +171,23 @@ export default function DashboardPage() {
     const updated = customers.map(c => c.id === id ? { ...c, status: newStatus } : c);
     setCustomers(updated);
     localStorage.setItem('customersDB', JSON.stringify(updated));
+
+    const realId = id ? id.toString().split('-')[0] : '';
+    if (realId) {
+      apiFetch(`/customers/${realId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      }).catch(err => console.error('Error updating status in backend:', err));
+    }
   };
 
   const totalTransfers = customers.length;
 
   const grouped = new Map();
-  const parseDateObj = (dStr: string) => {
-    if (!dStr) return new Date(0);
-    if (dStr.includes('/')) {
-      const parts = dStr.split('/');
-      if (parts.length === 3) {
-        const d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-        return isNaN(d.getTime()) ? new Date(0) : d;
-      }
-    }
-    const d = new Date(dStr);
-    return isNaN(d.getTime()) ? new Date(0) : d;
-  };
 
   customers.forEach(c => {
     const id = c.email ? c.email.toLowerCase().trim() : `${c.firstName || ''} ${c.lastName || ''}`.trim().toLowerCase() || c.name || Math.random().toString();
-    const date = parseDateObj(c.transferDate);
+    const date = parseDate(c.transferDate);
     if (!grouped.has(id)) {
       grouped.set(id, { type: c.customerType || 'Individual', company: c.company, transfers: 0, latestDate: date });
     }
@@ -206,28 +201,44 @@ export default function DashboardPage() {
   grouped.forEach(g => {
     const monthsSinceLastActive = (new Date().getTime() - g.latestDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
     let segment = 'One-Time Passenger';
-    if (g.type === 'Corporate Agency' || g.company) segment = 'Corporate';
+    if (g.type === 'B2B Partner' || g.company) segment = 'Corporate';
     else if (g.transfers >= 2) segment = 'Frequent Flyer';
     else if (monthsSinceLastActive >= 2 || g.latestDate.getTime() === 0) segment = 'At-Risk';
     if (segment === 'At-Risk') atRiskCount++;
   });
 
   const completed = customers.filter(c => c.status === 'Completed').length;
+
   const recent = [...customers]
     .filter(c => !dismissedRecent.includes(c.id))
-    .sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
+    .sort((a, b) => {
+      const resDiff = (b.rawResId || 0) - (a.rawResId || 0);
+      if (resDiff !== 0) return resDiff;
+      return (b.rawId || 0) - (a.rawId || 0);
+    })
     .slice(0, 5);
 
-  const totalRevenue = customers.reduce((sum, c) => {
-    if (c.status !== 'Cancelled') {
-      return sum + getVehiclePrice(c.vehicleType);
-    }
-    return sum;
+  const currentDateObj = new Date();
+  const currentYear = currentDateObj.getFullYear();
+  const currentMonth = currentDateObj.getMonth();
+  const currentMonthName = currentDateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Current Month Transfers (excluding Cancelled)
+  const thisMonthTransfers = customers.filter(c => {
+    if (!c.transferDate || c.status === 'Cancelled') return false;
+    const d = parseDate(c.transferDate);
+    return d.getTime() > 0 && d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+  });
+
+  const monthlyRevenue = thisMonthTransfers.reduce((sum, c) => {
+    return sum + (c.price ? parseFloat(c.price) : getVehiclePrice(c.vehicleType));
   }, 0);
+
+  const monthlyCompleted = thisMonthTransfers.filter(c => c.status === 'Completed').length;
 
   const now = new Date().setHours(0, 0, 0, 0);
   const upcomingOps = customers
-    .filter(c => getTimestamp(c.transferDate) >= now && c.status !== 'Cancelled')
+    .filter(c => getTimestamp(c.transferDate) >= now && c.status !== 'Cancelled' && c.status !== 'Completed')
     .sort((a, b) => {
       const dateDiff = getTimestamp(a.transferDate) - getTimestamp(b.transferDate);
       if (dateDiff === 0) {
@@ -250,7 +261,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 items-start">
         {/* Left Column: Monthly Target Gauge + Recently Added */}
         <div className="space-y-8 flex flex-col">
-          <TargetGaugeCard totalRevenue={totalRevenue} target={20000} completedCount={completed} />
+          <TargetGaugeCard monthlyRevenue={monthlyRevenue} target={20000} completedCount={monthlyCompleted} monthName={currentMonthName} />
 
           <div className="bg-white rounded-3xl shadow-soft overflow-hidden flex flex-col">
             <div className="p-8 pb-4 bg-white">

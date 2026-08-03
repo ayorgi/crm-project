@@ -1,7 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Receipt, DollarSign, Clock, CheckCircle2, Download, Search, Filter, AlertCircle, Building2, User, ChevronDown } from 'lucide-react';
+import { Clock, CheckCircle2, Download, Search, AlertCircle, Building2, User, ChevronDown } from 'lucide-react';
 import { getVehiclePrice } from '@/lib/utils';
+import { apiFetch, transformBackendCustomers } from '@/lib/api';
+import { parseDate } from '@/lib/dateUtils';
+import { downloadInvoiceHtml, parseReservationPricing } from '@/lib/invoiceTemplate';
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -9,69 +12,90 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [visibleCount, setVisibleCount] = useState(10);
 
-  useEffect(() => {
-    const customersDB = JSON.parse(localStorage.getItem('customersDB') || '[]');
-    
-    // Group rides by Company (if B2B) or Email/Name (if Individual)
+  const processInvoices = (customersDB: any[]) => {
     const grouped = new Map();
 
     customersDB.forEach((c: any) => {
       if (c.status === 'Cancelled') return;
-      const isB2B = c.customerType === 'Corporate Agency';
+      const isB2B = c.customerType === 'B2B Partner';
       const billToId = isB2B && c.company ? c.company : c.email || `${c.firstName} ${c.lastName}`;
       const billToName = isB2B && c.company ? c.company : `${c.firstName} ${c.lastName}`;
       
-      const price = getVehiclePrice(c.vehicleType);
-      
+      const { basePrice, tipAmount, totalPrice } = parseReservationPricing(c);
+      const rideDate = c.transferDate ? parseDate(c.transferDate) : new Date(0);
+
       if (!grouped.has(billToId)) {
         grouped.set(billToId, {
           id: `INV-${Math.floor(10000 + Math.random() * 90000)}`,
           billTo: billToName,
           isB2B,
+          totalBase: 0,
+          totalTips: 0,
           totalAmount: 0,
           ridesCount: 0,
-          dueDate: new Date(c.transferDate), // Just use first transfer date as a mock due date base
+          dueDate: rideDate,
           status: 'Pending',
           latestRideDate: new Date(0),
+          rides: [],
         });
       }
       
       const g = grouped.get(billToId);
-      g.totalAmount += price;
+      g.totalBase += basePrice;
+      g.totalTips += tipAmount;
+      g.totalAmount += totalPrice;
       g.ridesCount += 1;
+      g.rides.push(c);
       
-      const rideDate = new Date(c.transferDate);
-      if (rideDate > g.latestRideDate) {
+      if (rideDate.getTime() > g.latestRideDate.getTime()) {
         g.latestRideDate = rideDate;
       }
     });
 
     const computedInvoices = Array.from(grouped.values()).map((inv: any, idx: number) => {
-      // Logic for status
       const now = new Date();
-      // If the latest ride was more than 30 days ago, it's paid or overdue
       const daysSinceLatest = (now.getTime() - inv.latestRideDate.getTime()) / (1000 * 60 * 60 * 24);
       
       let status = 'Pending';
       if (daysSinceLatest > 60) status = 'Overdue';
       else if (daysSinceLatest > 15 && daysSinceLatest <= 60) status = 'Paid';
-      else if (daysSinceLatest < 0) status = 'Pending'; // future
+      else if (daysSinceLatest < 0) status = 'Pending';
 
-      // Add random fuzziness to status so it looks like a real CRM
       if (idx % 5 === 0) status = 'Overdue';
       if (idx % 3 === 0 && status !== 'Overdue') status = 'Paid';
 
       return {
         ...inv,
         status,
-        dateFormatted: inv.latestRideDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        formattedAmount: `$${inv.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        formattedDueDate: inv.latestRideDate.getTime() > 0 
+          ? inv.latestRideDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '30 Days Net',
       };
     });
 
-    // Sort by largest amount first
-    computedInvoices.sort((a, b) => b.totalAmount - a.totalAmount);
     setInvoices(computedInvoices);
+  };
+
+  useEffect(() => {
+    apiFetch('/customers')
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success' && Array.isArray(result.data)) {
+          const transformed = transformBackendCustomers(result.data);
+          localStorage.setItem('customersDB', JSON.stringify(transformed));
+          processInvoices(transformed);
+        } else {
+          const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+          processInvoices(local);
+        }
+      })
+      .catch(() => {
+        const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+        processInvoices(local);
+      });
   }, []);
+
 
   const totalRevenue = invoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
   const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((acc, inv) => acc + inv.totalAmount, 0);
@@ -161,16 +185,31 @@ export default function InvoicesPage() {
   };
 
   const handleDownloadInvoice = (inv: any) => {
-    const dataStr = JSON.stringify(inv, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${inv.id}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const latestRide = inv.rides && inv.rides.length > 0 ? inv.rides[0] : null;
+    const { basePrice, tipAmount, totalPrice, cardLast4 } = latestRide
+      ? parseReservationPricing(latestRide)
+      : { basePrice: inv.totalBase || inv.totalAmount, tipAmount: inv.totalTips || 0, totalPrice: inv.totalAmount, cardLast4: '5632' };
+
+    downloadInvoiceHtml({
+      id: String(inv.id).replace('INV-', ''),
+      pickupLocation: latestRide?.pickupLocation || 'VIP Transfer Service',
+      dropoffLocation: latestRide?.dropoffLocation || 'Consolidated Billing',
+      transferDate: inv.formattedDueDate || 'Current Billing Cycle',
+      transferTime: latestRide?.transferTime || '12:00',
+      transferType: latestRide?.transferType || (inv.isB2B ? 'Corporate VIP' : 'VIP Transfer'),
+      vehicleType: latestRide?.vehicleType || (inv.ridesCount > 1 ? `${inv.ridesCount} Completed Rides` : 'Executive VIP Sedan'),
+      passengers: latestRide?.passengers || inv.ridesCount || 1,
+      flightNumber: latestRide?.flightNumber || '',
+      passengerName: inv.billTo,
+      email: latestRide?.email || (inv.isB2B ? `billing@${inv.billTo.toLowerCase().replace(/[^a-z0-9]/g, '')}.com` : 'vip.client@transfervip.com'),
+      phone: latestRide?.phone || '+1 (555) 019-2834',
+      company: inv.isB2B ? inv.billTo : '',
+      status: inv.status === 'Paid' ? 'Paid' : 'Pending',
+      basePrice: inv.ridesCount > 1 ? inv.totalBase : basePrice,
+      tipAmount: inv.ridesCount > 1 ? inv.totalTips : tipAmount,
+      totalPrice: inv.totalAmount,
+      cardLast4,
+    }, `Invoice_${inv.id}.html`);
   };
 
   return (
@@ -252,7 +291,8 @@ export default function InvoicesPage() {
                 <th className="py-4 px-6">{renderSortHeader('RIDES', 'ridesCount')}</th>
                 <th className="py-4 px-6">{renderSortHeader('DATE GENERATED', 'date')}</th>
                 <th className="py-4 px-6 text-right">{renderSortHeader('AMOUNT', 'totalAmount', true)}</th>
-                <th className="py-4 px-6 text-center">{renderSortHeader('STATUS', 'status', false, true)}</th>
+                <th className="py-4 px-6 text-center">STATUS</th>
+
                 <th className="py-4 px-6 text-right">ACTION</th>
               </tr>
             </thead>
@@ -271,7 +311,8 @@ export default function InvoicesPage() {
                     </div>
                   </td>
                   <td className="py-4 px-6 text-gray-500 font-medium">{inv.ridesCount} rides</td>
-                  <td className="py-4 px-6 text-gray-500">{inv.dateFormatted}</td>
+                  <td className="py-4 px-6 text-gray-500">{inv.formattedDueDate || '30 Days Net'}</td>
+
                   <td className="py-4 px-6 text-right font-black text-gray-900">${inv.totalAmount.toLocaleString()}</td>
                   <td className="py-4 px-6 text-center">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${

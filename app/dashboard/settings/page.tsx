@@ -1,23 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Settings, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Lock, Save } from 'lucide-react';
+import { Settings, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Save } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
-const Toggle = ({ label, description, state, setState }: any) => (
-  <div className="flex items-center justify-between p-6 bg-white rounded-3xl hover:shadow-soft transition-all duration-300">
-    <div className="pr-4">
-      <h4 className="font-semibold text-gray-900 text-sm mb-1">{label}</h4>
-      <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-    </div>
-    <button 
-      onClick={() => setState(!state)}
-      className={`w-14 h-7 rounded-full relative transition-colors duration-300 ease-in-out shrink-0 outline-none focus:ring-2 focus:ring-[#aa2d29]/20 focus:ring-offset-1 ${state ? 'bg-[#aa2d29]' : 'bg-gray-200'}`}
-    >
-      <div 
-        className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform duration-300 ease-in-out shadow-sm ${state ? 'translate-x-7' : 'translate-x-0'}`} 
-      />
-    </button>
-  </div>
-);
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'General' | 'Data'>('General');
 
@@ -87,14 +72,26 @@ export default function SettingsPage() {
   };
 
   const handleSyncWithServer = () => {
-    fetch('/fixed_db.json')
+    apiFetch('/customers')
       .then(res => res.json())
-      .then(fixedData => {
-        localStorage.setItem('customersDB', JSON.stringify(fixedData));
-        window.dispatchEvent(new Event('customersUpdated'));
-        alert(`Successfully synchronized ${fixedData.length} records from server fixed_db.json!`);
+      .then(result => {
+        if (result.status === 'success' && Array.isArray(result.data)) {
+          const customers = result.data.map((item: any) => ({
+            id: item.id.toString(),
+            firstName: item.first_name,
+            lastName: item.last_name,
+            email: item.email || '',
+            phone: item.phone || '',
+            company: item.company || '',
+            customerType: item.customer_type,
+            status: 'Confirmed',
+          }));
+          localStorage.setItem('customersDB', JSON.stringify(customers));
+          window.dispatchEvent(new Event('customersUpdated'));
+          alert(`Successfully synchronized ${customers.length} records from Laravel API!`);
+        }
       })
-      .catch(() => alert('Failed to fetch fixed_db.json from server.'));
+      .catch(() => alert('Failed to sync with Laravel API. Make sure the backend server is running.'));
   };
 
   const tabs = [

@@ -1,6 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Diamond, Building2, AlertTriangle, Search, Gift, Mail, ArrowRight, User, ChevronDown } from 'lucide-react';
+import { apiFetch, transformBackendCustomers } from '@/lib/api';
+import { parseDate } from '@/lib/dateUtils';
 
 export default function SegmentsPage() {
     const [activeTab, setActiveTab] = useState('All');
@@ -10,15 +12,14 @@ export default function SegmentsPage() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
     const [visibleCount, setVisibleCount] = useState(10);
 
-    useEffect(() => {
-        const customersDB = JSON.parse(localStorage.getItem('customersDB') || '[]');
+    const processSegments = (customersDB: any[]) => {
         const grouped = new Map();
 
         customersDB.forEach((c: any) => {
             const id = c.email || `${c.firstName} ${c.lastName}` || c.name || c.company || 'Unknown';
             const name = `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.name || c.company || 'Unknown';
-            const type = c.customerType || 'Individual';
-            const date = c.transferDate ? new Date(c.transferDate) : new Date(0);
+            const type = c.customerType || 'Individual VIP';
+            const date = c.transferDate ? parseDate(c.transferDate) : new Date(0);
             
             if (!grouped.has(id)) {
                 grouped.set(id, {
@@ -34,7 +35,7 @@ export default function SegmentsPage() {
             
             const g = grouped.get(id);
             g.transfers += 1;
-            if (date > g.latestDate) g.latestDate = date;
+            if (date.getTime() > g.latestDate.getTime()) g.latestDate = date;
             if (c.vehicleType) g.vehicles[c.vehicleType] = (g.vehicles[c.vehicleType] || 0) + 1;
         });
 
@@ -42,8 +43,8 @@ export default function SegmentsPage() {
             let segment = 'One-Time Passenger';
             const monthsSinceLastActive = (new Date().getTime() - g.latestDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
 
-            if (g.type === 'Corporate Agency' || g.company) segment = 'Corporate';
-            else if (g.transfers >= 2) segment = 'Frequent Flyer'; // 2+ for testing easily
+            if (g.type === 'B2B Partner' || g.company) segment = 'Corporate';
+            else if (g.transfers >= 2) segment = 'Frequent Flyer';
             else if (monthsSinceLastActive >= 2 || g.latestDate.getTime() === 0) segment = 'At-Risk';
 
             let prefVehicle = '—';
@@ -65,7 +66,27 @@ export default function SegmentsPage() {
         });
 
         setSegmentsData(computedData);
+    };
+
+    useEffect(() => {
+        apiFetch('/customers')
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === 'success' && Array.isArray(result.data)) {
+                    const transformed = transformBackendCustomers(result.data);
+                    localStorage.setItem('customersDB', JSON.stringify(transformed));
+                    processSegments(transformed);
+                } else {
+                    const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+                    processSegments(local);
+                }
+            })
+            .catch(() => {
+                const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+                processSegments(local);
+            });
     }, []);
+
 
     const tabs = ['All', 'Frequent Flyer', 'Corporate', 'At-Risk', 'One-Time Passenger'];
 
@@ -160,7 +181,7 @@ export default function SegmentsPage() {
                     <div className="flex bg-gray-100/80 p-1 rounded-xl w-full md:w-auto">
                         {tabs.map(t => (
                             <button key={t} onClick={() => setActiveTab(t)}
-                                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === t ? 'bg-[#aa2d29] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}>
+                                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === t ? 'bg-[#aa2d29] text-[#aa2d29] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'}`}>
                                 {t}
                             </button>
                         ))}
@@ -178,6 +199,8 @@ export default function SegmentsPage() {
                                 <th className="py-4 px-6">PREFERRED VEHICLE</th>
                             </tr>
                         </thead>
+
+
                         <tbody className="text-sm text-gray-700 divide-y divide-gray-50">
                             {sortedFiltered.length === 0 ? (
                                 <tr><td colSpan={6} className="py-12 text-center text-gray-400 font-medium">No passengers found in this segment.</td></tr>

@@ -1,15 +1,13 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { User, X, LayoutDashboard, Plus, Users, Receipt, LineChart, PieChart, Settings } from 'lucide-react';
+import { User, X, LayoutDashboard, Plus, Users, Receipt, LineChart, PieChart, Settings, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import NewReservationModal from './NewReservationModal';
 
 export default function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
 
   const [currentUser, setCurrentUser] = useState('Arda');
   const [userRole, setUserRole] = useState('Admin');
@@ -25,10 +23,17 @@ export default function TopNav() {
         icon: <LayoutDashboard className="w-5 h-5 text-[#aa2d29]" />
       };
     }
-    if (path.includes('/customers')) {
+    if (path.includes('/bookings') || path.includes('/customers')) {
+      return {
+        title: 'Bookings',
+        description: 'Manage all VIP transfer reservations and status tracking.',
+        icon: <CalendarCheck className="w-5 h-5 text-[#aa2d29]" />
+      };
+    }
+    if (path.includes('/guests')) {
       return {
         title: 'VIP Guests',
-        description: 'Manage reservations, transfers and guest profiles.',
+        description: 'Manage unique guest profiles and transfer histories.',
         icon: <Users className="w-5 h-5 text-[#aa2d29]" />
       };
     }
@@ -95,6 +100,28 @@ export default function TopNav() {
 
     const savedPic = localStorage.getItem('profilePic');
     if (savedPic) setProfilePic(savedPic);
+
+    // Fetch live user info from backend
+    if (typeof window !== 'undefined' && localStorage.getItem('sanctum_token')) {
+      import('@/lib/api').then(({ apiFetch }) => {
+        apiFetch('/me')
+          .then(res => res.json())
+          .then(result => {
+            if (result.status === 'success' && result.data) {
+              const u = result.data;
+              if (u.name) setCurrentUser(u.name);
+              if (u.profile_pic) {
+                setProfilePic(u.profile_pic);
+                localStorage.setItem('profilePic', u.profile_pic);
+              }
+              if (u.phone) {
+                localStorage.setItem('currentUserPhone', u.phone);
+              }
+            }
+          })
+          .catch(() => {});
+      });
+    }
   }, []);
 
   return (
@@ -114,37 +141,10 @@ export default function TopNav() {
         </div>
       </div>
 
-      {/* Right Side: New Reservation Button + Divider + View as Customer + Profile */}
+      {/* Right Side: View as Customer + Profile */}
       <div className="flex items-center gap-4 text-gray-500">
-        {/* Flux Style New Reservation Button */}
-        <button
-          onClick={() => setIsReservationModalOpen(true)}
-          className="hidden md:inline-flex items-center gap-1.5 bg-[#aa2d29] text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-[#8e2622] active:scale-95 transition-all shadow-md shadow-[#aa2d29]/20 shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Reservation</span>
-        </button>
 
-        {/* Global New Reservation Popup Modal */}
-        <NewReservationModal
-          isOpen={isReservationModalOpen}
-          onClose={() => setIsReservationModalOpen(false)}
-        />
 
-        {/* Vertical Divider */}
-        <div className="h-5 w-[1px] bg-gray-200 hidden md:block" />
-
-        <Link
-          href="/portal/"
-          onClick={() => {
-            if (!localStorage.getItem('currentCustomer')) {
-              localStorage.setItem('currentCustomer', 'Admin Tester');
-            }
-          }}
-          className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-full text-xs font-bold transition-colors"
-        >
-          View as Customer
-        </Link>
 
         {/* Profile */}
         <div className="relative" ref={profileRef}>
@@ -176,9 +176,20 @@ export default function TopNav() {
                 <Link href="/dashboard/profile" onClick={() => setIsProfileOpen(false)} className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors font-medium flex items-center gap-2">
                   <User className="w-4 h-4" /> Edit Profile
                 </Link>
-                <Link href="/login" className="px-3 py-2 text-sm text-[#aa2d29] hover:bg-red-50 rounded-lg transition-colors font-medium flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const keysToRemove = [
+                      'currentCustomer', 'currentCustomerEmail', 'currentUser', 'currentUserEmail',
+                      'currentUserRole', 'userRole', 'sanctum_token', 'customersDB',
+                      'customerProfile', 'profilePic', 'currentUserPhone',
+                    ];
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                    router.push('/login');
+                  }}
+                  className="w-full px-3 py-2 text-sm text-[#aa2d29] hover:bg-red-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                >
                   <X className="w-4 h-4" /> Logout
-                </Link>
+                </button>
               </div>
             </div>
           )}

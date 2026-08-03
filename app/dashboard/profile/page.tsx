@@ -1,14 +1,19 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Save, User, Mail, Briefcase, Phone } from 'lucide-react';
+import { Camera, Save, User, Mail, Briefcase, Phone, Trash2, AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -17,6 +22,20 @@ export default function ProfilePage() {
     setEmail(localStorage.getItem('currentUserEmail') || 'admin@crm.com');
     setPhone(localStorage.getItem('currentUserPhone') || '+1 234 567 890');
     setProfilePic(localStorage.getItem('profilePic') || null);
+
+    // Fetch live user profile from backend
+    apiFetch('/me')
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success' && result.data) {
+          const u = result.data;
+          if (u.name) { setName(u.name); localStorage.setItem('currentUser', u.name); }
+          if (u.email) { setEmail(u.email); localStorage.setItem('currentUserEmail', u.email); }
+          if (u.phone) { setPhone(u.phone); localStorage.setItem('currentUserPhone', u.phone); }
+          if (u.profile_pic) { setProfilePic(u.profile_pic); localStorage.setItem('profilePic', u.profile_pic); }
+        }
+      })
+      .catch(err => console.error('Error loading admin profile from backend:', err));
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +49,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     localStorage.setItem('currentUser', name);
     localStorage.setItem('currentUserRole', role);
@@ -38,15 +57,46 @@ export default function ProfilePage() {
     localStorage.setItem('currentUserPhone', phone);
     if (profilePic) localStorage.setItem('profilePic', profilePic);
 
-    // Simulate brief delay for UX
+    // Persist to backend database
+    try {
+      await apiFetch('/me/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          name,
+          phone,
+          profile_pic: profilePic,
+        }),
+      });
+    } catch (err) {
+      console.error('Error saving admin profile to backend:', err);
+    }
+
     setTimeout(() => {
       setIsSaving(false);
       window.location.reload(); // Reload to ensure TopNav and Dashboard update cleanly
     }, 600);
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await apiFetch('/me', { method: 'DELETE' });
+    } catch {
+      // Continue cleanup anyway
+    } finally {
+      const keysToRemove = [
+        'currentCustomer', 'currentCustomerEmail', 'currentUser', 'currentUserEmail',
+        'currentUserRole', 'userRole', 'sanctum_token', 'customersDB',
+        'customerProfile', 'profilePic', 'currentUserPhone',
+      ];
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      setIsDeleting(false);
+      router.push('/login');
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto pb-10 pt-2 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto pb-10 pt-2 animate-in fade-in duration-300 space-y-8">
 
       <div className="bg-white rounded-3xl shadow-soft overflow-hidden">
         {/* Header Cover */}
@@ -150,6 +200,63 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Danger Zone: Account Deletion */}
+      <div className="bg-red-50/50 rounded-3xl p-8 border border-red-200/60 space-y-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <div>
+            <h2 className="text-sm font-bold text-red-900 uppercase tracking-widest">Danger Zone</h2>
+            <p className="text-xs text-red-600 mt-0.5">
+              Permanently delete your account and remove all your data, reservations, and profile settings from the database.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 active:scale-95 transition-all text-xs flex items-center gap-2 shadow-sm shadow-red-600/20"
+          >
+            <Trash2 className="w-4 h-4" /> Delete Account
+          </button>
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Account Permanently?</h3>
+            <p className="text-xs text-gray-600 mb-6 leading-relaxed">
+              This action <span className="font-bold text-red-600">cannot be undone</span>. All your data including account credentials, guest profile, and reservation history will be permanently deleted from our database.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-sm flex items-center gap-2"
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete My Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

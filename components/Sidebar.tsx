@@ -1,5 +1,5 @@
 'use client';
-import { LayoutDashboard, Users, Settings, LogOut, PieChart, LineChart, Receipt } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, PieChart, LineChart, Receipt, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -10,13 +10,15 @@ export default function Sidebar() {
   return (
     <aside className="bg-white text-gray-900 font-medium text-sm h-full w-64 flex-shrink-0 flex flex-col p-6 gap-2 z-20 shadow-soft relative">
       {/* Logo */}
-      <div className="mb-8 flex justify-center w-full items-center">
-        <Image
-          alt="Logo"
-          src={logoImg}
-          priority
-          className="w-full max-w-[190px] h-auto object-contain mix-blend-multiply"
-        />
+      <div className="mb-6 flex justify-center w-full items-center">
+        <Link href="/dashboard" className="flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/admin_logo.png"
+            alt="TRANSFER VIP"
+            className="w-[170px] h-auto object-contain max-h-16"
+          />
+        </Link>
       </div>
 
 
@@ -32,10 +34,19 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
+        {/* Bookings Link */}
+        <Link
+          href="/dashboard/bookings/"
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/bookings') || pathname.includes('/dashboard/customers') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}>
+          <CalendarCheck className="w-5 h-5" />
+          Bookings
+        </Link>
+
         {/* VIP Guests Link */}
         <Link
-          href="/dashboard/customers/"
-          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/customers') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          href="/dashboard/guests/"
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/guests') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <Users className="w-5 h-5" />
           VIP Guests

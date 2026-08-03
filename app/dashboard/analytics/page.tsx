@@ -1,20 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-
-
-const parseDate = (dStr: string) => {
-  if (!dStr) return null;
-  if (dStr.includes('/')) {
-    const parts = dStr.split('/');
-    if (parts.length === 3) {
-      const d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-      return isNaN(d.getTime()) ? null : d;
-    }
-  }
-  const d = new Date(dStr);
-  return isNaN(d.getTime()) ? null : d;
-};
+import { apiFetch, transformBackendCustomers } from '@/lib/api';
+import { parseDate as parseDateUtil } from '@/lib/dateUtils';
 
 export default function AnalyticsPage() {
   const [fleetData, setFleetData] = useState<any[]>([]);
@@ -25,9 +13,7 @@ export default function AnalyticsPage() {
   const [kpi, setKpi] = useState<any>({ total: 0, thisMonthCount: 0, monthlyGrowth: 0, busiestDay: '-', peakHour: '-', topRoute: '-' });
   const [sparklineData, setSparklineData] = useState<any[]>([]);
 
-  useEffect(() => {
-    const customers = JSON.parse(localStorage.getItem('customersDB') || '[]');
-
+  const processAnalytics = (customers: any[]) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const fleet: Record<string, any> = {};
     days.forEach(d => fleet[d] = { name: d, van: 0, execSedan: 0, firstSedan: 0, suv: 0, total: 0 });
@@ -46,8 +32,8 @@ export default function AnalyticsPage() {
 
       // Date / Fleet
       if (c.transferDate) {
-        const d = parseDate(c.transferDate);
-        if (d) {
+        const d = parseDateUtil(c.transferDate);
+        if (d && d.getTime() > 0) {
           const dayName = days[d.getDay()];
           fleet[dayName].total++;
           if (c.vehicleType?.includes('Van') || c.vehicleType?.includes('Minibus')) fleet[dayName].van++;
@@ -116,25 +102,23 @@ export default function AnalyticsPage() {
     customers.forEach((c: any) => {
       if (c.status === 'Cancelled') return;
       if (c.transferDate) {
-        const d = parseDate(c.transferDate);
-        if (d) {
-          if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
-            thisMonthCount++;
-          } else if (d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth) {
-            lastMonthCount++;
-          }
+        const d = parseDateUtil(c.transferDate);
+        if (d && d.getTime() > 0) {
+          if (d.getFullYear() === currentYear && d.getMonth() === currentMonth) thisMonthCount++;
+          if (d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth) lastMonthCount++;
         }
       }
     });
 
-    let monthlyGrowth = 0;
+    let growth = 0;
     if (lastMonthCount > 0) {
-      monthlyGrowth = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
+      growth = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
     } else if (thisMonthCount > 0) {
-      monthlyGrowth = 100;
+      growth = 100;
     }
 
     // 6-month Sparkline data calculation
+
     const monthsSparkline: any[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -144,7 +128,7 @@ export default function AnalyticsPage() {
       
       const count = customers.filter((c: any) => {
         if (c.status === 'Cancelled') return false;
-        const cd = parseDate(c.transferDate);
+        const cd = parseDateUtil(c.transferDate);
         return cd && cd.getFullYear() === year && cd.getMonth() === monthIdx;
       }).length;
 
@@ -155,13 +139,32 @@ export default function AnalyticsPage() {
     setKpi({
       total: customers.length,
       thisMonthCount,
-      monthlyGrowth,
+      monthlyGrowth: growth,
       busiestDay: maxDayVal > 0 ? maxDay : 'N/A',
       peakHour: maxHourVal > 0 ? maxHour : 'N/A',
       topRoute: sortedRoutes.length > 0 ? sortedRoutes[0].name.split('➔')[0].trim() : 'N/A'
     });
+  };
 
+  useEffect(() => {
+    apiFetch('/customers')
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success' && Array.isArray(result.data)) {
+          const transformed = transformBackendCustomers(result.data);
+          localStorage.setItem('customersDB', JSON.stringify(transformed));
+          processAnalytics(transformed);
+        } else {
+          const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+          processAnalytics(local);
+        }
+      })
+      .catch(() => {
+        const local = JSON.parse(localStorage.getItem('customersDB') || '[]');
+        processAnalytics(local);
+      });
   }, []);
+
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {

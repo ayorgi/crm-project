@@ -18,7 +18,8 @@ export const parseDate = (dStr: string): Date => {
   }
 
   if (trimmed.includes('-')) {
-    const parts = trimmed.split('-');
+    const datePart = trimmed.split('T')[0];
+    const parts = datePart.split('-');
     if (parts.length === 3 && parts[0].length === 4) {
       const year = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
