@@ -172,11 +172,19 @@ export default function DashboardPage() {
     setCustomers(updated);
     localStorage.setItem('customersDB', JSON.stringify(updated));
 
-    const realId = id ? id.toString().split('-')[0] : '';
-    if (realId) {
-      apiFetch(`/customers/${realId}`, {
+    const target = customers.find(c => c.id === id);
+    const resId = target?.rawResId || (id && id.toString().includes('-') ? id.toString().split('-')[1] : null);
+    const realId = target?.rawId || (id ? id.toString().split('-')[0] : '');
+
+    if (resId && resId !== '0') {
+      apiFetch(`/reservations/${resId}`, {
         method: 'PUT',
         body: JSON.stringify({ status: newStatus })
+      }).catch(err => console.error('Error updating reservation status in backend:', err));
+    } else if (realId) {
+      apiFetch(`/customers/${realId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus, reservation_id: resId })
       }).catch(err => console.error('Error updating status in backend:', err));
     }
   };
@@ -202,7 +210,7 @@ export default function DashboardPage() {
     const monthsSinceLastActive = (new Date().getTime() - g.latestDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
     let segment = 'One-Time Passenger';
     if (g.type === 'B2B Partner' || g.company) segment = 'Corporate';
-    else if (g.transfers >= 2) segment = 'Frequent Flyer';
+    else if (g.transfers >= 2) segment = 'Frequent Rider';
     else if (monthsSinceLastActive >= 2 || g.latestDate.getTime() === 0) segment = 'At-Risk';
     if (segment === 'At-Risk') atRiskCount++;
   });
@@ -272,7 +280,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     <th className="py-3 px-3">Name</th>
-                    <th className="py-3 px-3">Email</th>
+                    <th className="py-3 px-3">Transfer Date</th>
                     <th className="py-3 px-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -293,7 +301,11 @@ export default function DashboardPage() {
                           </button>
                         </div>
                       </td>
-                      <td className="py-3.5 px-3 text-gray-500">{c.email}</td>
+                      <td className="py-3.5 px-3 text-gray-500">
+                        {c.transferDate
+                          ? new Date(c.transferDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : c.createdAt || '—'}
+                      </td>
                       <td className="py-3.5 px-3 text-right">
                         <Select
                           value={c.status || 'Pending'}

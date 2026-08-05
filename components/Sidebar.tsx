@@ -37,7 +37,7 @@ export default function Sidebar() {
         {/* Bookings Link */}
         <Link
           href="/dashboard/bookings/"
-          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/bookings') || pathname.includes('/dashboard/customers') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          className={`rounded-lg flex items-center gap-3 px-4 py-2.5 transition-all duration-200 font-semibold ${pathname.includes('/dashboard/bookings') ? 'bg-[#aa2d29]/10 text-[#aa2d29]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}>
           <CalendarCheck className="w-5 h-5" />
           Bookings

@@ -10,6 +10,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['192.168.128.190'],
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
   ...(isProd && { output: 'export' }),
   basePath: isProd ? '/crm-project' : '',
   assetPrefix: isProd ? '/crm-project/' : '',

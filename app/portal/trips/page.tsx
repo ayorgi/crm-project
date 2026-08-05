@@ -141,20 +141,26 @@ export default function MyTripsPage() {
 
     try {
       const tripId = tripToCancel.id;
-      const realId = tripId ? tripId.toString().split('-')[0] : '';
+      const resId = tripToCancel.reservationId || (tripId && tripId.toString().includes('-') ? tripId.toString().split('-')[1] : null);
+      const realId = tripToCancel.customerId || (tripId ? tripId.toString().split('-')[0] : '');
 
       // Update backend
-      if (realId) {
-        await apiFetch(`/customers/${realId}`, {
+      if (resId && resId !== '0') {
+        await apiFetch(`/reservations/${resId}`, {
           method: 'PUT',
           body: JSON.stringify({ status: 'Cancelled' }),
+        }).catch(err => console.error('Error cancelling reservation in backend:', err));
+      } else if (realId) {
+        await apiFetch(`/customers/${realId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: 'Cancelled', reservation_id: resId }),
         }).catch(err => console.error('Error cancelling in backend:', err));
       }
 
       // Update localStorage customersDB
       const customersDB = JSON.parse(localStorage.getItem('customersDB') || '[]');
       const updatedDB = customersDB.map((c: any) => {
-        if (c.id === tripId || c.id?.toString().startsWith(`${realId}-`)) {
+        if (c.id === tripId) {
           return { ...c, status: 'Cancelled' };
         }
         return c;
@@ -230,7 +236,7 @@ export default function MyTripsPage() {
   return (
     <div className="max-w-5xl mx-auto pb-16 pt-2 animate-in fade-in duration-200">
       
-      {/* Toast Notification */}
+      {/* Toast Message */}
       {cancelSuccessMsg && (
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-between text-sm shadow-xs animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2.5">

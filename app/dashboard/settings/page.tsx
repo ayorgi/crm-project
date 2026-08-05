@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Settings, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Save } from 'lucide-react';
+import { Settings, Database, Download, AlertOctagon, Check, Globe, Calendar, DollarSign, Save, UploadCloud, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
 export default function SettingsPage() {
@@ -14,6 +14,10 @@ export default function SettingsPage() {
   // Status flags
   const [isSaved, setIsSaved] = useState(false);
   const [showDangerConfirm, setShowDangerConfirm] = useState(false);
+
+  // Sync to DB state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ total: number; success: number; skipped: number; failed: number } | null>(null);
 
   useEffect(() => {
     // Load preferences
@@ -69,6 +73,71 @@ export default function SettingsPage() {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handlePushToDatabase = async () => {
+    const raw = localStorage.getItem('customersDB') || '[]';
+    const customers: any[] = JSON.parse(raw);
+    if (customers.length === 0) {
+      alert('No customers found in local storage.');
+      return;
+    }
+
+    setIsSyncing(true);
+    setSyncResult(null);
+
+    let success = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const c of customers) {
+      // Build the payload expected by StoreCustomerRequest
+      const firstName = (c.firstName || c.first_name || '').trim();
+      const lastName  = (c.lastName  || c.last_name  || '').trim();
+      if (!firstName && !lastName) { skipped++; continue; }
+
+      const payload: Record<string, any> = {
+        first_name:    firstName  || 'Unknown',
+        last_name:     lastName   || 'Unknown',
+        email:         c.email    || null,
+        phone:         c.phone    || null,
+        company:       c.company  || null,
+        customer_type: c.customerType || c.customer_type || null,
+      };
+
+      // Include latest reservation data if available
+      const res = Array.isArray(c.reservations) ? c.reservations[c.reservations.length - 1] : null;
+      if (res || c.pickup_location || c.transfer_date) {
+        payload.transfer_type    = res?.transfer_type    || c.transferType    || c.transfer_type    || null;
+        payload.vehicle_type     = res?.vehicle_type     || c.vehicleType     || c.vehicle_type     || null;
+        payload.pickup_location  = res?.pickup_location  || c.pickupLocation  || c.pickup_location  || null;
+        payload.dropoff_location = res?.dropoff_location || c.dropoffLocation || c.dropoff_location || null;
+        payload.transfer_date    = res?.transfer_date    || c.transferDate    || c.transfer_date    || null;
+        payload.transfer_time    = res?.transfer_time    || c.transferTime    || c.transfer_time    || null;
+        payload.flight_number    = res?.flight_number    || c.flightNumber    || c.flight_number    || null;
+        payload.passengers       = res?.passengers       || c.passengers      || null;
+        payload.status           = res?.status           || c.status          || null;
+        payload.notes            = res?.notes            || c.notes           || null;
+      }
+
+      try {
+        const response = await apiFetch('/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (response.ok) {
+          success++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    setIsSyncing(false);
+    setSyncResult({ total: customers.length, success, skipped, failed });
   };
 
   const handleSyncWithServer = () => {
@@ -202,6 +271,44 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 
+                {/* ── PUSH TO DATABASE ──────────────────────────── */}
+                <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex items-start gap-4">
+                  <div className="p-3 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900 mb-1">Push Local Customers to Database</h4>
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                      Reads all customers stored in your browser's local storage and saves them permanently to the Laravel database. Existing records are updated; new ones are created.
+                    </p>
+
+                    {syncResult && (
+                      <div className="mb-4 p-4 bg-white border border-emerald-200 rounded-xl text-sm">
+                        <p className="font-bold text-gray-800 mb-2">Sync Complete ✅</p>
+                        <div className="flex gap-4 flex-wrap">
+                          <span className="text-gray-600">Total: <strong>{syncResult.total}</strong></span>
+                          <span className="text-emerald-700">Saved: <strong>{syncResult.success}</strong></span>
+                          <span className="text-amber-600">Skipped: <strong>{syncResult.skipped}</strong></span>
+                          <span className="text-red-600">Failed: <strong>{syncResult.failed}</strong></span>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      id="push-to-db-btn"
+                      onClick={handlePushToDatabase}
+                      disabled={isSyncing}
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {isSyncing ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Syncing…</>
+                      ) : (
+                        <><UploadCloud className="w-4 h-4" /> Sync to Database</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Export / Import */}
                 <div className="grid grid-cols-1 gap-6">
 

@@ -80,7 +80,7 @@ const FAQ_CATEGORIES = [
 
 const TICKET_TOPICS = [
   'Transfer Modification',
-  'Flight Delay Notification',
+  'Flight Delay Update',
   'Invoice & Billing',
   'Special Cabin Request',
   'Lost Item',
@@ -91,11 +91,11 @@ const TICKET_TOPICS = [
 const MOCK_TICKETS = [
   {
     id: 'TK-8492',
-    topic: 'Flight Delay Notification',
+    topic: 'Flight Delay Update',
     message: 'My flight LCA-8821 has been delayed by 2 hours. Please inform the driver.',
     status: 'Resolved',
     date: '2026-07-24',
-    response: 'Your chauffeur has been notified and will wait at the updated arrival time. No extra charge applies.',
+    response: 'Your chauffeur has been informed and will wait at the updated arrival time. No extra charge applies.',
   },
   {
     id: 'TK-8501',

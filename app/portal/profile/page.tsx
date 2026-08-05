@@ -49,7 +49,8 @@ export default function ProfilePage() {
     const currentCustomer = localStorage.getItem('currentCustomer') || '';
     const currentEmail = localStorage.getItem('currentCustomerEmail') || '';
     const currentPhone = localStorage.getItem('currentUserPhone') || '';
-    const savedProfile = JSON.parse(localStorage.getItem('customerProfile') || '{}');
+    const userProfileKey = currentEmail ? `customerProfile_${currentEmail.toLowerCase().trim()}` : 'customerProfile';
+    const savedProfile = JSON.parse(localStorage.getItem(userProfileKey) || localStorage.getItem('customerProfile') || '{}');
     const nameParts = currentCustomer.split(' ');
     const first = savedProfile.firstName || nameParts[0] || '';
     const last = savedProfile.lastName || nameParts.slice(1).join(' ') || '';
@@ -79,15 +80,50 @@ export default function ProfilePage() {
           const f = customer.first_name || nParts[0] || '';
           const l = customer.last_name || nParts.slice(1).join(' ') || '';
 
-          setProfile(prev => ({
-            ...prev,
-            firstName: f || prev.firstName,
-            lastName: l || prev.lastName,
-            email: user.email || customer.email || prev.email,
-            phone: customer.phone || user.phone || prev.phone || '',
-            company: customer.company || prev.company || '',
-            preferredVehicle: customer.preferred_vehicle || prev.preferredVehicle || 'VIP Business Van',
-          }));
+          // Check if there are past reservations to extract preferences from notes if missing
+          const reservations = customer.reservations || [];
+          let extractedQuiet = '';
+          let extractedClimate = '';
+          let extractedChildSeat = '';
+          let extractedMeetSign = '';
+          let extractedNotes = '';
+
+          if (reservations.length > 0) {
+            const latestNotes = reservations[0]?.notes || '';
+            const qMatch = latestNotes.match(/\[Quiet Ride:\s*([^\]]+)\]/i);
+            const cMatch = latestNotes.match(/\[Climate:\s*([^\]]+)\]/i);
+            const csMatch = latestNotes.match(/\[Child Seat:\s*([^\]]+)\]/i);
+            const msMatch = latestNotes.match(/\[Meet Sign:\s*([^\]]+)\]/i);
+            const nMatch = latestNotes.match(/Notes:\s*(.*)$/i);
+
+            if (qMatch) extractedQuiet = qMatch[1].trim().includes('Silent') || qMatch[1].trim() === 'Yes' ? 'Yes' : 'No';
+            if (cMatch) extractedClimate = cMatch[1].trim();
+            if (csMatch) extractedChildSeat = csMatch[1].trim();
+            if (msMatch) extractedMeetSign = msMatch[1].trim();
+            if (nMatch) extractedNotes = nMatch[1].trim();
+          }
+
+          setProfile(prev => {
+            const updated = {
+              ...prev,
+              firstName: f || prev.firstName,
+              lastName: l || prev.lastName,
+              email: user.email || customer.email || prev.email,
+              phone: customer.phone || user.phone || prev.phone || '',
+              company: customer.company || prev.company || '',
+              preferredVehicle: customer.preferred_vehicle || prev.preferredVehicle || (reservations[0]?.vehicle_type) || 'VIP Business Van',
+              quietRide: prev.quietRide || extractedQuiet || 'Yes',
+              temperature: prev.temperature || extractedClimate || '21°C',
+              childSeat: prev.childSeat || extractedChildSeat || 'None',
+              meetGreetName: prev.meetGreetName || extractedMeetSign || `${f || prev.firstName} ${l || prev.lastName}`.trim(),
+              specialRequests: prev.specialRequests || extractedNotes || '',
+            };
+            localStorage.setItem('customerProfile', JSON.stringify(updated));
+            if (updated.email) {
+              localStorage.setItem(`customerProfile_${updated.email.toLowerCase().trim()}`, JSON.stringify(updated));
+            }
+            return updated;
+          });
 
           if (user.phone) localStorage.setItem('currentUserPhone', user.phone);
         }
@@ -98,6 +134,9 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem('customerProfile', JSON.stringify(profile));
+    if (profile.email) {
+      localStorage.setItem(`customerProfile_${profile.email.toLowerCase().trim()}`, JSON.stringify(profile));
+    }
     if (profile.firstName) {
       const newName = `${profile.firstName} ${profile.lastName}`.trim();
       localStorage.setItem('currentCustomer', newName);
@@ -230,7 +269,7 @@ export default function ProfilePage() {
               <User className="w-5 h-5 text-[#aa2d29]" />
               <div>
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Personal Details</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Your primary contact details used for reservations and trip notifications.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Your primary contact details used for reservations and transfer updates.</p>
               </div>
             </div>
 
@@ -426,6 +465,8 @@ export default function ProfilePage() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Current Password</label>
               <input
                 type="password"
+                name="current-password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={profile.currentPassword}
                 onChange={e => setProfile({ ...profile, currentPassword: e.target.value })}
@@ -438,6 +479,8 @@ export default function ProfilePage() {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">New Password</label>
                 <input
                   type="password"
+                  name="new-password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   value={profile.newPassword}
                   onChange={e => setProfile({ ...profile, newPassword: e.target.value })}
@@ -448,6 +491,8 @@ export default function ProfilePage() {
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Confirm New Password</label>
                 <input
                   type="password"
+                  name="confirm-new-password"
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   value={profile.confirmPassword}
                   onChange={e => setProfile({ ...profile, confirmPassword: e.target.value })}

@@ -44,7 +44,7 @@ export default function SegmentsPage() {
             const monthsSinceLastActive = (new Date().getTime() - g.latestDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
 
             if (g.type === 'B2B Partner' || g.company) segment = 'Corporate';
-            else if (g.transfers >= 2) segment = 'Frequent Flyer';
+            else if (g.transfers >= 2) segment = 'Frequent Rider';
             else if (monthsSinceLastActive >= 2 || g.latestDate.getTime() === 0) segment = 'At-Risk';
 
             let prefVehicle = '—';
@@ -88,7 +88,7 @@ export default function SegmentsPage() {
     }, []);
 
 
-    const tabs = ['All', 'Frequent Flyer', 'Corporate', 'At-Risk', 'One-Time Passenger'];
+    const tabs = ['All', 'Frequent Rider', 'Corporate', 'At-Risk', 'One-Time Passenger'];
 
     const handleSort = (field: 'name' | 'transfers' | 'latestTime') => {
         if (sortField !== field) {
@@ -123,7 +123,7 @@ export default function SegmentsPage() {
     });
 
     const stats = [
-        { title: 'Frequent Flyers', count: segmentsData.filter(d => d.segment === 'Frequent Flyer').length, icon: <Diamond className="w-6 h-6 text-[#aa2d29]" />, bg: 'bg-[#aa2d29]/10', text: 'text-[#aa2d29]' },
+        { title: 'Frequent Riders', count: segmentsData.filter(d => d.segment === 'Frequent Rider').length, icon: <Diamond className="w-6 h-6 text-[#aa2d29]" />, bg: 'bg-[#aa2d29]/10', text: 'text-[#aa2d29]' },
         { title: 'Corporate Clients', count: segmentsData.filter(d => d.segment === 'Corporate').length, icon: <Building2 className="w-6 h-6 text-gray-700" />, bg: 'bg-gray-100', text: 'text-gray-800' },
         { title: 'At-Risk Customers', count: segmentsData.filter(d => d.segment === 'At-Risk').length, icon: <AlertTriangle className="w-6 h-6 text-amber-500" />, bg: 'bg-amber-50', text: 'text-amber-700' },
         { title: 'One-Time Passengers', count: segmentsData.filter(d => d.segment === 'One-Time Passenger').length, icon: <User className="w-6 h-6 text-fuchsia-500" />, bg: 'bg-fuchsia-50', text: 'text-fuchsia-700' },
@@ -131,7 +131,7 @@ export default function SegmentsPage() {
 
     const getSegmentBadge = (segment: string) => {
         switch (segment) {
-            case 'Frequent Flyer': return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#aa2d29]/10 text-[#aa2d29] border border-[#aa2d29]/20"><Diamond className="w-3 h-3" /> Frequent Flyer</span>;
+            case 'Frequent Rider': return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#aa2d29]/10 text-[#aa2d29] border border-[#aa2d29]/20"><Diamond className="w-3 h-3" /> Frequent Rider</span>;
             case 'Corporate': return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200"><Building2 className="w-3 h-3" /> Corporate</span>;
             case 'At-Risk': return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"><AlertTriangle className="w-3 h-3" /> At-Risk</span>;
             case 'One-Time Passenger': return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200"><User className="w-3 h-3" /> One-Time Passenger</span>;
